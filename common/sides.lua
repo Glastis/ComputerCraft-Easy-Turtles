@@ -7,9 +7,9 @@
 local sides = {}
 
 sides.front = 0
-sides.back = 1
-sides.left = 2
-sides.right = 3
+sides.right = 1
+sides.back = 2
+sides.left = 3
 sides.up = 4
 sides.down = 5
 
