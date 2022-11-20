@@ -92,3 +92,5 @@ local function checkFuel(minimum_percentage, target_percentage)
     return true
 end
 fuel.checkFuel = checkFuel
+
+return fuel
