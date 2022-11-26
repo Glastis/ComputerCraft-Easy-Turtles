@@ -112,20 +112,28 @@ local function setCoords(x, y, z, facing)
 end
 move.setCoords = setCoords
 
-local function rotate(direction)
+--[[
+---- Rotate the turtle to the given side. If the side is up or down, this function will do nothing.
+----
+---- @param direction  side, The direction to rotate to
+--]]
+local function rotate(side)
     local i
 
-    if (_coordinates.facing + 3) % 4 == direction then
+    if side > 3 then
+        return
+    end
+    if (_coordinates.facing + 3) % 4 == side then
         turtle.turnLeft()
     end
-    while _coordinates.facing ~= direction do
+    while _coordinates.facing ~= side do
         turtle.turnRight()
         _coordinates.facing = _coordinates.facing + 1
         if _coordinates.facing > 3 then
             _coordinates.facing = 0
         end
     end
-    _coordinates.facing = direction
+    _coordinates.facing = side
 end
 move.rotate = rotate
 
