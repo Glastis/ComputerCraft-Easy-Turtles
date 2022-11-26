@@ -237,6 +237,7 @@ local function move_to_and_execute(x, y, z, force, callback)
     return total_moved == math.abs(_coordinates.y - y) + math.abs(_coordinates.z - z) + math.abs(_coordinates.x - x)
 
 end
+move.move_to_and_execute = move_to_and_execute
 
 --[[
 ---- Move the turtle to the given coordinates
