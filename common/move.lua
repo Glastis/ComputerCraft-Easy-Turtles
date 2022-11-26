@@ -232,10 +232,9 @@ local function move_to_and_execute(x, y, z, force, callback)
     local total_moved
 
     total_moved = _move_to_axis_coord(up, down, _coordinates.y, y, force, callback)
-    total_moved = total_moved + _move_to_axis_coord(forward, backward, _coordinates.z, z, force, callback)
     total_moved = total_moved + _move_to_axis_coord(right, left, _coordinates.x, x, force, callback)
+    total_moved = total_moved + _move_to_axis_coord(forward, backward, _coordinates.z, z, force, callback)
     return total_moved == math.abs(_coordinates.y - y) + math.abs(_coordinates.z - z) + math.abs(_coordinates.x - x)
-
 end
 move.move_to_and_execute = move_to_and_execute
 
