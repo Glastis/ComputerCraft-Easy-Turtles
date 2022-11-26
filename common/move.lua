@@ -14,13 +14,28 @@ _coordinates.y = 0
 _coordinates.z = 0
 _coordinates.facing = 0
 
--- TODO: Implement the coords update in the move functions
 
 -------------------------------------------------------------------[[
 ---------------------------------------------------------------------
 ----                    PRIVATE FUNCTIONS                        ----
 ---------------------------------------------------------------------
 -------------------------------------------------------------------]]
+
+local function _move_direction_update_coords(amount, direction)
+    if direction == sides.back then
+        _coordinates.x = _coordinates.x - amount
+    elseif direction == sides.front then
+        _coordinates.x = _coordinates.x + amount
+    elseif direction == sides.left then
+        _coordinates.z = _coordinates.z - amount
+    elseif direction == sides.right then
+        _coordinates.z = _coordinates.z + amount
+    elseif direction == sides.up then
+        _coordinates.y = _coordinates.y + amount
+    elseif direction == sides.down then
+        _coordinates.y = _coordinates.y - amount
+    end
+end
 
 local function _move_direction(f_dig, f_move, amount, force, direction)
     local i
@@ -36,7 +51,7 @@ local function _move_direction(f_dig, f_move, amount, force, direction)
     end
     while i <= amount do
         if f_move() then
-            _coordinates.y = _coordinates.y + 1
+            _move_direction_update_coords(1, direction)
             total_moved = total_moved + 1
         elseif force then
             f_dig()
