@@ -192,7 +192,7 @@ inventory.drop_slot_to_side = drop_slot_to_side
 ---- @return            boolean, true if the item was found
 --]]
 local function drop_item(item_name, side)
-    _parse_inventory_and_select_in_range(function(detail)
+    return _parse_inventory_and_select_in_range(function(detail)
         return detail and detail.name == item_name
     end, 1, _max_inventory_size, 1, drop_slot_to_side, {side})
 end
@@ -205,7 +205,7 @@ end
 ---- @return            boolean, true if all items were dropped
 --]]
 local function drop_item_list(item_list, side)
-    _parse_inventory_and_select_in_range(function(detail)
+    return _parse_inventory_and_select_in_range(function(detail)
         return detail and table.contains(item_list, detail.name)
     end, 1, _max_inventory_size, 1, drop_slot_to_side, {side})
 end
