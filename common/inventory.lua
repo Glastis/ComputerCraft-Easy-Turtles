@@ -196,6 +196,7 @@ local function drop_item(item_name, side)
         return detail and detail.name == item_name
     end, 1, _max_inventory_size, 1, drop_slot_to_side, {side})
 end
+inventory.drop_item = drop_item
 
 --[[
 ---- Drop all items in list from the inventory.
