@@ -37,7 +37,7 @@ local function _move_direction_update_coords(amount, direction)
     end
 end
 
-local function _move_direction(f_dig, f_move, amount, force, direction)
+local function _move_direction(f_dig, f_move, amount, force, direction, callback)
     local i
     local total_moved
 
@@ -52,6 +52,9 @@ local function _move_direction(f_dig, f_move, amount, force, direction)
     while i <= amount do
         if f_move() then
             _move_direction_update_coords(1, direction)
+            if callback then
+                callback()
+            end
             total_moved = total_moved + 1
         elseif force then
             f_dig()
@@ -140,71 +143,99 @@ move.rotate = rotate
 --[[
 ---- Move the turtle upwards
 ----
----- @param amount  The amount of blocks to move, if nil, turtle will only move 1 block.
----- @param force   If true, the turtle will break blocks in its way. False by default.
----- @return number The amount of blocks moved.
+---- @param amount      The amount of blocks to move, if nil, turtle will only move 1 block.
+---- @param force       If true, the turtle will break blocks in its way. False by default.
+---- @param callback    A function to call after each successful move.
+---- @return number     The amount of blocks moved.
 --]]
-local function up(amount, force)
-    return _move_direction(turtle.digUp, turtle.up, amount, force, sides.up)
+local function up(amount, force, callback)
+    return _move_direction(turtle.digUp, turtle.up, amount, force, sides.up, callback)
 end
 move.up = up
 
 --[[
 ---- Move the turtle downwards
 ----
----- @param amount  The amount of blocks to move, if nil, turtle will only move 1 block.
----- @param force   If true, the turtle will break blocks in its way. False by default.
----- @return number The amount of blocks moved.
+---- @param amount      The amount of blocks to move, if nil, turtle will only move 1 block.
+---- @param force       If true, the turtle will break blocks in its way. False by default.
+---- @param callback    A function to call after each successful move.
+---- @return number     The amount of blocks moved.
 --]]
-local function down(amount, force)
-    return _move_direction(turtle.digDown, turtle.down, amount, force, sides.down)
+local function down(amount, force, callback)
+    return _move_direction(turtle.digDown, turtle.down, amount, force, sides.down, callback)
 end
 move.down = down
 
 --[[
 ---- Move the turtle forward
 ----
----- @param amount  The amount of blocks to move, if nil, turtle will only move 1 block.
----- @param force   If true, the turtle will break blocks in its way. False by default.
----- @return number The amount of blocks moved.
+---- @param amount      The amount of blocks to move, if nil, turtle will only move 1 block.
+---- @param force       If true, the turtle will break blocks in its way. False by default.
+---- @param callback    A function to call after each successful move.
+---- @return number     The amount of blocks moved.
 --]]
-local function forward(amount, force)
-    return _move_direction(turtle.dig, turtle.forward, amount, force, sides.front)
+local function forward(amount, force, callback)
+    return _move_direction(turtle.dig, turtle.forward, amount, force, sides.front, callback)
 end
 move.forward = forward
 
 --[[
 ---- Move the turtle backward
 ----
----- @param amount  The amount of blocks to move, if nil, turtle will only move 1 block.
----- @param force   If true, the turtle will break blocks in its way. False by default.
----- @return number The amount of blocks moved.
+---- @param amount      The amount of blocks to move, if nil, turtle will only move 1 block.
+---- @param force       If true, the turtle will break blocks in its way. False by default.
+---- @param callback    A function to call after each successful move.
+---- @return number     The amount of blocks moved.
 --]]
-local function backward(amount, force)
-    return _move_direction(turtle.dig, turtle.back, amount, force, sides.back)
+local function backward(amount, force, callback)
+    return _move_direction(turtle.dig, turtle.back, amount, force, sides.back, callback)
 end
 move.backward = backward
 
 --[[
 ---- Move the turtle to the left, according to its initial facing direction
 ----
----- @param amount  The amount of blocks to move, if nil, turtle will only move 1 block.
----- @param force   If true, the turtle will break blocks in its way. False by default.
----- @return number The amount of blocks moved.
+---- @param amount      The amount of blocks to move, if nil, turtle will only move 1 block.
+---- @param force       If true, the turtle will break blocks in its way. False by default.
+---- @param callback    A function to call after each successful move.
+---- @return number     The amount of blocks moved.
 --]]
 local function left(amount, force)
-    return _move_direction(turtle.dig, turtle.back, amount, force, sides.left)
+    return _move_direction(turtle.dig, turtle.back, amount, force, sides.left, callback)
 end
 
 --[[
 ---- Move the turtle to the right, according to its initial facing direction
 ----
----- @param amount  The amount of blocks to move, if nil, turtle will only move 1 block.
----- @param force   If true, the turtle will break blocks in its way. False by default.
----- @return number The amount of blocks moved.
+---- @param amount      The amount of blocks to move, if nil, turtle will only move 1 block.
+---- @param force       If true, the turtle will break blocks in its way. False by default.
+---- @param callback    A function to call after each successful move.
+---- @return number     The amount of blocks moved.
 --]]
 local function right(amount, force)
-    return _move_direction(turtle.dig, turtle.forward, amount, force, sides.right)
+    return _move_direction(turtle.dig, turtle.forward, amount, force, sides.right, callback)
+end
+
+move.move_to = move_to
+
+--[[
+---- Move the turtle to the given coordinates, and execute the callback function at each step
+----
+---- @param x           The x coordinate to move to
+---- @param y           The y coordinate to move to
+---- @param z           The z coordinate to move to
+---- @param force       If true, the turtle will break blocks in its way. False by default.
+---- @param callback    The function to execute at each step
+---- @return boolean    True if the turtle reached the given coordinates, false otherwise.
+--]]
+local function move_to_and_execute(x, y, z, force, callback)
+    local total_moved
+
+    total_moved = _move_to_axis_coord(up, down, _coordinates.y, y, force, callback)
+    total_moved = total_moved + _move_to_axis_coord(forward, backward, _coordinates.z, z, force, callback)
+    total_moved = total_moved + _move_to_axis_coord(right, left, _coordinates.x, x, force, callback)
+    return total_moved == math.abs(_coordinates.y - y) + math.abs(_coordinates.z - z) + math.abs(_coordinates.x - x)
+
 end
 
 --[[
@@ -217,14 +248,7 @@ end
 ---- @return boolean True if the turtle reached the given coordinates, false otherwise.
 --]]
 local function move_to(x, y, z, force)
-    local i
-    local total_moved
-
-    total_moved = _move_to_axis_coord(up, down, _coordinates.y, y, force)
-    total_moved = total_moved + _move_to_axis_coord(forward, backward, _coordinates.z, z, force)
-    total_moved = total_moved + _move_to_axis_coord(right, left, _coordinates.x, x, force)
-    return total_moved == 0
+    return move_to_and_execute(x, y, z, force, nil)
 end
-move.move_to = move_to
 
 return move
