@@ -4,10 +4,10 @@
 --- DateTime: 26-Nov-22 18:26
 ---
 
-local sides = require 'sides'
-local move = require 'move'
-local inventory = require 'inventory'
-local storage = require 'storage'
+local sides = require '../../common/sides'
+local move = require '../../common/move'
+local inventory = require '../../common/inventory'
+local storage = require '../../common/storage'
 
 local FIELD_SIZE_X = 5
 local FIELD_SIZE_Z = 5
