@@ -10,7 +10,7 @@ local move = require 'move'
 local inventory = {}
 
 
-local _max_inventory_size = turtle.getInventorySize()
+local _MAX_INVENTORY_SIZE = 16
 
 
 -------------------------------------------------------------------[[
@@ -40,7 +40,7 @@ local function _parse_inventory_and_select_in_range(f_condition, from_slot, to_s
         print("Error: _parse_inventory_and_select_in_range: step cannot be 0")
         return false
     end
-    while i <= _max_inventory_size and i > 0 and
+    while i <= _MAX_INVENTORY_SIZE and i > 0 and
             ((step > 0) and from_slot <= to_slot or (step < 0) and from_slot >= to_slot) do
         detail = turtle.getItemDetail(i)
         if f_condition(detail) then
@@ -97,7 +97,7 @@ end
 ---- @return            boolean, true if the item was found
 --]]
 local function select_item(item_name)
-    return _select_item_in_slot_range(item_name, 1, _max_inventory_size, 1)
+    return _select_item_in_slot_range(item_name, 1, _MAX_INVENTORY_SIZE, 1)
 end
 inventory.select_item = select_item
 
@@ -107,7 +107,7 @@ inventory.select_item = select_item
 ---- @return            boolean, true if an empty slot was found
 --]]
 local function select_first_empty_slot()
-    return _select_empty_in_slot_range(1, _max_inventory_size, 1)
+    return _select_empty_in_slot_range(1, _MAX_INVENTORY_SIZE, 1)
 end
 
 --[[
@@ -117,7 +117,7 @@ end
 --]]
 
 local function select_last_empty_slot()
-    return _select_empty_in_slot_range(_max_inventory_size, 1, -1)
+    return _select_empty_in_slot_range(_MAX_INVENTORY_SIZE, 1, -1)
 end
 
 --[[
@@ -131,7 +131,7 @@ local function select_first_item_in_list(item_list)
     local detail
 
     i = 1
-    while i <= _max_inventory_size do
+    while i <= _MAX_INVENTORY_SIZE do
         detail = turtle.getItemDetail(i)
         if detail and table.contains(item_list, detail.name) then
             return true
@@ -149,7 +149,7 @@ local function defragment_inventory()
     local detail
 
     i = 1
-    while i <= _max_inventory_size do
+    while i <= _MAX_INVENTORY_SIZE do
         detail = turtle.getItemDetail(i)
         if not detail then
             if not _parse_inventory_and_select_in_range(function(condition_detail)
@@ -159,7 +159,7 @@ local function defragment_inventory()
             end
             turtle.transferTo(i)
         end
-        while turtle.getItemSpace(i) > 0 and _select_item_in_slot_range(detail.name, _max_inventory_size, i + 1, -1) do
+        while turtle.getItemSpace(i) > 0 and _select_item_in_slot_range(detail.name, _MAX_INVENTORY_SIZE, i + 1, -1) do
             turtle.transferTo(i)
         end
         i = i + 1
@@ -194,7 +194,7 @@ inventory.drop_slot_to_side = drop_slot_to_side
 local function drop_item(item_name, side)
     return _parse_inventory_and_select_in_range(function(detail)
         return detail and detail.name == item_name
-    end, 1, _max_inventory_size, 1, drop_slot_to_side, {side})
+    end, 1, _MAX_INVENTORY_SIZE, 1, drop_slot_to_side, { side})
 end
 inventory.drop_item = drop_item
 
@@ -208,7 +208,7 @@ inventory.drop_item = drop_item
 local function drop_item_list(item_list, side)
     return _parse_inventory_and_select_in_range(function(detail)
         return detail and table.contains(item_list, detail.name)
-    end, 1, _max_inventory_size, 1, drop_slot_to_side, {side})
+    end, 1, _MAX_INVENTORY_SIZE, 1, drop_slot_to_side, { side})
 end
 inventory.drop_item_list = drop_item_list
 
@@ -221,7 +221,7 @@ inventory.drop_item_list = drop_item_list
 local function drop_all(side)
     return _parse_inventory_and_select_in_range(function(detail)
         return detail
-    end, 1, _max_inventory_size, 1, drop_slot_to_side, {side})
+    end, 1, _MAX_INVENTORY_SIZE, 1, drop_slot_to_side, { side})
 end
 inventory.drop_all = drop_all
 
