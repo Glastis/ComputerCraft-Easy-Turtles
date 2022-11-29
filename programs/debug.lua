@@ -25,10 +25,13 @@ local function main(args_table)
     local success
     local error_message
 
-    success, error_message = pcall(shell.run, unpack(args_table))
+    print('Arguments: ', table.unpack(args_table))
+    success, error_message = pcall(shell.run, table.unpack(args_table))
+    print('Success: ' .. tostring(success))
+    print('Error message: ' .. tostring(error_message))
     if not success then
         overwrite_logs(error_message, output_filename)
     end
 end
 
-main(pack(args))
+main(args)
