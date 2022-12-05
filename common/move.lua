@@ -21,6 +21,26 @@ _coordinates.facing = 0
 ---------------------------------------------------------------------
 -------------------------------------------------------------------]]
 
+local function _rotate(side)
+    local i
+
+    if side > 3 then
+        return
+    end
+    if (_coordinates.facing + 3) % 4 == side then
+        turtle.turnLeft()
+    else
+        while _coordinates.facing ~= side do
+            turtle.turnRight()
+            _coordinates.facing = _coordinates.facing + 1
+            if _coordinates.facing > 3 then
+                _coordinates.facing = 0
+            end
+        end
+    end
+    _coordinates.facing = side
+end
+
 local function _move_direction_update_coords(amount, direction)
     if direction == sides.back then
         _coordinates.x = _coordinates.x - amount
@@ -121,22 +141,7 @@ move.setCoords = setCoords
 ---- @param direction  side, The direction to rotate to
 --]]
 local function rotate(side)
-    local i
-
-    if side > 3 then
-        return
-    end
-    if (_coordinates.facing + 3) % 4 == side then
-        turtle.turnLeft()
-    end
-    while _coordinates.facing ~= side do
-        turtle.turnRight()
-        _coordinates.facing = _coordinates.facing + 1
-        if _coordinates.facing > 3 then
-            _coordinates.facing = 0
-        end
-    end
-    _coordinates.facing = side
+    _rotate(side)
 end
 move.rotate = rotate
 
