@@ -39,20 +39,20 @@ local function store_seeds_to_chest()
 end
 
 local function process_field()
-    local y
+    local z
     local x
 
     move.setCoords(0, 0, 0)
-    y = 0
+    z = 0
     x = 0
-    while y < FIELD_SIZE_Z do
-        move.move_to_and_execute(x, y, 0, true, harvest_and_plant_below)
+    while z < FIELD_SIZE_Z do
+        move.move_to_and_execute(x, 0, z, true, harvest_and_plant_below)
         if x == 0 then
             x = FIELD_SIZE_X - 1
         else
             x = 0
         end
-        y = y + 1
+        z = z + 1
     end
     move.move_to_and_execute(0, 0, 0, true, harvest_and_plant_below)
 end
