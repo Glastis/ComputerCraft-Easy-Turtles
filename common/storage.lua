@@ -17,7 +17,7 @@ local storage = {}
 
 
 local function _convert_side_to_suck_function(side)
-    if side < 3 then
+    if side <= 3 then
         return turtle.suck
     elseif side == sides.up then
         return turtle.suckUp
