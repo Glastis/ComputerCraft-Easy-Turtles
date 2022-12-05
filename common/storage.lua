@@ -6,6 +6,7 @@
 
 
 local sides = require 'sides'
+local move = require 'move'
 
 local storage = {}
 
@@ -44,10 +45,16 @@ end
 ---- @return       The amount of items sucked.
 --]]
 local function suck(side, amount)
+    local ret
+
     if not side then
         side = sides.front
     end
-    return _convert_side_to_suck_function(side)(amount)
+    move.rotate(side)
+    ret = _convert_side_to_suck_function(side)(amount)
+    move.rotate(sides.front)
+    return ret
 end
+storage.suck = suck
 
 return storage
