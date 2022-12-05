@@ -7,7 +7,7 @@
 
 local sides = require 'sides'
 
-local move = {}
+local storage = {}
 
 -------------------------------------------------------------------[[
 ---------------------------------------------------------------------
@@ -50,4 +50,4 @@ local function suck(side, amount)
     return _convert_side_to_suck_function(side)(amount)
 end
 
-return move
+return storage
