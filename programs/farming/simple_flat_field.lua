@@ -68,7 +68,7 @@ local function go_to_field_from_start()
 end
 
 local function go_to_start_from_field()
-    move.back(3)
+    move.backward(3)
     move.down()
 end
 
