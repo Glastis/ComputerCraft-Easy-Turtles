@@ -6,12 +6,11 @@
 
 local sides = require 'sides'
 local move = require 'move'
+local constants = require 'constants'
+local parsing = require 'parsing'
+local utils = require 'utils'
 
 local inventory = {}
-
-
-local _MAX_INVENTORY_SIZE = 16
-
 
 -------------------------------------------------------------------[[
 ---------------------------------------------------------------------
@@ -33,30 +32,31 @@ local _MAX_INVENTORY_SIZE = 16
 ---- @return boolean     true if the condition is met, false otherwise
 --]]
 local function _parse_inventory_and_select_in_range(f_condition, from_slot, to_slot, step, callback, callback_args)
-    local i
-    local detail
+    local inventory_info
+    local on_success
 
-    if step == 0 then
-        print("Error: _parse_inventory_and_select_in_range: step cannot be 0")
-        return false
-    end
-    while i <= _MAX_INVENTORY_SIZE and i > 0 and
-            ((step > 0) and from_slot <= to_slot or (step < 0) and from_slot >= to_slot) do
-        detail = turtle.getItemDetail(i)
-        if f_condition(detail) then
-            turtle.select(i)
-            if not callback then
-                return true
-            end
-            if callback_args then
-                callback(i, callback_args)
-            else
-                callback(i)
-            end
+    inventory_info = {}
+    inventory_info.from_slot = from_slot
+    inventory_info.to_slot = to_slot
+    inventory_info.step = step
+    inventory_info.inventory_size = constants.TURTLE_INVENTORY_SIZE
+    if callback then
+        if not callback_args then
+            callback_args = {}
         end
-        i = i + step
+        table.insert(callback_args, 1, callback)
     end
-    return false
+    on_success = function(slot, callback, ...)
+        turtle.select(slot)
+        if not callback then
+            return true
+        end
+        callback(slot, ...)
+    end
+    if callback then
+        return parsing.parse_inventory(f_condition, turtle.getItemDetail, inventory_info, false, on_success, callback_args)
+    end
+    return parsing.parse_inventory(f_condition, turtle.getItemDetail, inventory_info, true, on_success, callback_args)
 end
 
 local function _select_item_in_slot_range(item_name, from_slot, to_slot, step)
@@ -69,19 +69,6 @@ local function _select_empty_in_slot_range(from_slot, to_slot, step)
     return _parse_inventory_and_select_in_range(function(detail)
                                                     return not detail
                                                 end, from_slot, to_slot, step)
-end
-
-local function _convert_side_to_drop_function(side)
-    if side < 3 then
-        return turtle.drop
-    elseif side == sides.up then
-        return turtle.dropUp
-    elseif side == sides.down then
-        return turtle.dropDown
-    else
-        print("Error: _convert_side_to_drop_function: side '" .. side .. "' is invalid")
-        return nil
-    end
 end
 
 -------------------------------------------------------------------[[
@@ -97,7 +84,7 @@ end
 ---- @return            boolean, true if the item was found
 --]]
 local function select_item(item_name)
-    return _select_item_in_slot_range(item_name, 1, _MAX_INVENTORY_SIZE, 1)
+    return _select_item_in_slot_range(item_name, 1, constants.TURTLE_INVENTORY_SIZE, 1)
 end
 inventory.select_item = select_item
 
@@ -107,7 +94,7 @@ inventory.select_item = select_item
 ---- @return            boolean, true if an empty slot was found
 --]]
 local function select_first_empty_slot()
-    return _select_empty_in_slot_range(1, _MAX_INVENTORY_SIZE, 1)
+    return _select_empty_in_slot_range(1, constants.TURTLE_INVENTORY_SIZE, 1)
 end
 
 --[[
@@ -117,7 +104,7 @@ end
 --]]
 
 local function select_last_empty_slot()
-    return _select_empty_in_slot_range(_MAX_INVENTORY_SIZE, 1, -1)
+    return _select_empty_in_slot_range(constants.TURTLE_INVENTORY_SIZE, 1, -1)
 end
 
 --[[
@@ -131,9 +118,9 @@ local function select_first_item_in_list(item_list)
     local detail
 
     i = 1
-    while i <= _MAX_INVENTORY_SIZE do
+    while i <= constants.TURTLE_INVENTORY_SIZE do
         detail = turtle.getItemDetail(i)
-        if detail and table.contains(item_list, detail.name) then
+        if detail and utils.is_elem_in_table(item_list, detail.name) then
             return true
         end
         i = i + 1
@@ -149,18 +136,21 @@ local function defragment_inventory()
     local detail
 
     i = 1
-    while i <= _MAX_INVENTORY_SIZE do
+    while i <= constants.TURTLE_INVENTORY_SIZE do
         detail = turtle.getItemDetail(i)
         if not detail then
             if not _parse_inventory_and_select_in_range(function(condition_detail)
-                return item_detail ~= nil
-            end, max_inventory_size, i + 1, -1) then
+                return condition_detail ~= nil
+            end, constants.TURTLE_INVENTORY_SIZE, i + 1, -1) then
                 return true
             end
             turtle.transferTo(i)
         end
-        while turtle.getItemSpace(i) > 0 and _select_item_in_slot_range(detail.name, _MAX_INVENTORY_SIZE, i + 1, -1) do
-            turtle.transferTo(i)
+        detail = turtle.getItemDetail(i)
+        if detail then
+            while turtle.getItemSpace(i) > 0 and _select_item_in_slot_range(detail.name, constants.TURTLE_INVENTORY_SIZE, i + 1, -1) do
+                turtle.transferTo(i)
+            end
         end
         i = i + 1
     end
@@ -180,7 +170,7 @@ local function drop_slot_to_side(slot, side)
         return true
     end
     move.rotate(side)
-    return _convert_side_to_drop_function(side)()
+    return sides.drop[side]()
 end
 inventory.drop_slot_to_side = drop_slot_to_side
 
@@ -194,7 +184,7 @@ inventory.drop_slot_to_side = drop_slot_to_side
 local function drop_item(item_name, side)
     return _parse_inventory_and_select_in_range(function(detail)
         return detail and detail.name == item_name
-    end, 1, _MAX_INVENTORY_SIZE, 1, drop_slot_to_side, { side})
+    end, 1, constants.TURTLE_INVENTORY_SIZE, 1, drop_slot_to_side, { side })
 end
 inventory.drop_item = drop_item
 
@@ -203,12 +193,16 @@ inventory.drop_item = drop_item
 ----
 ---- @param item_list   table, eg: {"minecraft:stone", "minecraft:dirt"}
 ---- @param side        number, eg: sides.front
+---- @param list_mode   boolean, true if the list is a blacklist, false if it is a whitelist. Default is false.
 ---- @return            boolean, true if all items were dropped
 --]]
-local function drop_item_list(item_list, side)
+local function drop_item_list(item_list, side, list_mode)
+    if not list_mode then
+        list_mode = false
+    end
     return _parse_inventory_and_select_in_range(function(detail)
-        return detail and table.contains(item_list, detail.name)
-    end, 1, _MAX_INVENTORY_SIZE, 1, drop_slot_to_side, { side})
+        return detail and utils.is_elem_in_table(item_list, detail.name) == not list_mode
+    end, 1, constants.TURTLE_INVENTORY_SIZE, 1, drop_slot_to_side, { side })
 end
 inventory.drop_item_list = drop_item_list
 
@@ -221,7 +215,7 @@ inventory.drop_item_list = drop_item_list
 local function drop_all(side)
     return _parse_inventory_and_select_in_range(function(detail)
         return detail
-    end, 1, _MAX_INVENTORY_SIZE, 1, drop_slot_to_side, { side})
+    end, 1, constants.TURTLE_INVENTORY_SIZE, 1, drop_slot_to_side, { side})
 end
 inventory.drop_all = drop_all
 

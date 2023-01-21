@@ -93,4 +93,27 @@ local function checkFuel(minimum_percentage, target_percentage)
 end
 fuel.checkFuel = checkFuel
 
+--[[
+---- Refuel from items in an inventory
+----
+---- @param side                    The side of the inventory to refuel from
+---- @param minimum_percentage      Fuel percentage to reach before refueling. If nil, start refueling at 20%.
+---- @param target_percentage       The target percentage of fuel to reach. If nil, refuel until 95% full.
+---- @return bool                   true if refuel reached the target_percentage, false otherwise.
+--]]
+local function refuel_from_inventory(side, minimum_percentage, target_percentage)
+    local ret
+
+    if not side then
+        side = sides.front
+    end
+    move.rotate(side)
+    ret = storage.suck(side, 1)
+    if ret then
+        return checkFuel(minimum_percentage, target_percentage)
+    end
+    return false
+end
+fuel.refuel_from_inventory = refuel_from_inventory
+
 return fuel

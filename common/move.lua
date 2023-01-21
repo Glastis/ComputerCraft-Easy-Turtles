@@ -5,6 +5,7 @@
 ---
 
 local sides = require 'sides'
+local file = require 'file'
 
 local move = {}
 
@@ -24,7 +25,7 @@ _coordinates.facing = 0
 local function _rotate(side)
     local i
 
-    if side > 3 then
+    if side > 3 or side == _coordinates.facing then
         return
     end
     if (_coordinates.facing + 3) % 4 == side then
@@ -57,11 +58,9 @@ local function _move_direction_update_coords(amount, direction)
     end
 end
 
-local function _move_direction(f_dig, f_move, amount, force, direction, callback)
-    local i
+local function _move_direction(f_dig, f_move, amount, force, direction, callback, callback_args)
     local total_moved
 
-    i = 1
     total_moved = 0
     if not amount then
         amount = 1
@@ -69,28 +68,29 @@ local function _move_direction(f_dig, f_move, amount, force, direction, callback
     if direction then
         _rotate(direction)
     end
-    while i <= amount do
+    while total_moved < amount do
         if f_move() then
             _move_direction_update_coords(1, direction)
             if callback then
-                callback()
+                if callback_args then
+                    callback(table.unpack(callback_args))
+                else
+                    callback()
+                end
             end
             total_moved = total_moved + 1
-        elseif force then
-            f_dig()
-        else
+        elseif force and not f_dig() then
             return total_moved
         end
-        i = i + 1
     end
     return total_moved
 end
 
-local function _move_to_axis_coord(f_move_axis, f_move_axis_neg, axis_value_actual, axis_value_target, force)
-    if axis_value_actual > axis_value_target then
-        return f_move_axis_neg(axis_value_actual - axis_value_target, force)
-    elseif axis_value_actual < axis_value_target then
-        return f_move_axis(axis_value_target - axis_value_actual, force)
+local function _move_to_axis_coord(f_move_axis, f_move_axis_neg, axis_value_current, axis_value_target, force, callback, callback_args)
+    if axis_value_current > axis_value_target then
+        return f_move_axis_neg(axis_value_current - axis_value_target, force, callback, callback_args)
+    elseif axis_value_current < axis_value_target then
+        return f_move_axis(axis_value_target - axis_value_current, force, callback, callback_args)
     end
     return 0
 end
@@ -153,8 +153,8 @@ move.rotate = rotate
 ---- @param callback    A function to call after each successful move.
 ---- @return number     The amount of blocks moved.
 --]]
-local function up(amount, force, callback)
-    return _move_direction(turtle.digUp, turtle.up, amount, force, sides.up, callback)
+local function up(amount, force, callback, callback_args)
+    return _move_direction(turtle.digUp, turtle.up, amount, force, sides.up, callback, callback_args)
 end
 move.up = up
 
@@ -166,8 +166,8 @@ move.up = up
 ---- @param callback    A function to call after each successful move.
 ---- @return number     The amount of blocks moved.
 --]]
-local function down(amount, force, callback)
-    return _move_direction(turtle.digDown, turtle.down, amount, force, sides.down, callback)
+local function down(amount, force, callback, callback_args)
+    return _move_direction(turtle.digDown, turtle.down, amount, force, sides.down, callback, callback_args)
 end
 move.down = down
 
@@ -179,8 +179,8 @@ move.down = down
 ---- @param callback    A function to call after each successful move.
 ---- @return number     The amount of blocks moved.
 --]]
-local function forward(amount, force, callback)
-    return _move_direction(turtle.dig, turtle.forward, amount, force, sides.front, callback)
+local function forward(amount, force, callback, callback_args)
+    return _move_direction(turtle.dig, turtle.forward, amount, force, sides.front, callback, callback_args)
 end
 move.forward = forward
 
@@ -192,8 +192,8 @@ move.forward = forward
 ---- @param callback    A function to call after each successful move.
 ---- @return number     The amount of blocks moved.
 --]]
-local function backward(amount, force, callback)
-    return _move_direction(turtle.dig, turtle.back, amount, force, sides.back, callback)
+local function backward(amount, force, callback, callback_args)
+    return _move_direction(turtle.dig, turtle.forward, amount, force, sides.back, callback, callback_args)
 end
 move.backward = backward
 
@@ -205,8 +205,8 @@ move.backward = backward
 ---- @param callback    A function to call after each successful move.
 ---- @return number     The amount of blocks moved.
 --]]
-local function left(amount, force)
-    return _move_direction(turtle.dig, turtle.back, amount, force, sides.left, callback)
+local function left(amount, force, callback, callback_args)
+    return _move_direction(turtle.dig, turtle.forward, amount, force, sides.left, callback, callback_args)
 end
 
 --[[
@@ -217,8 +217,8 @@ end
 ---- @param callback    A function to call after each successful move.
 ---- @return number     The amount of blocks moved.
 --]]
-local function right(amount, force)
-    return _move_direction(turtle.dig, turtle.forward, amount, force, sides.right, callback)
+local function right(amount, force, callback, callback_args)
+    return _move_direction(turtle.dig, turtle.forward, amount, force, sides.right, callback, callback_args)
 end
 
 move.move_to = move_to
@@ -233,12 +233,12 @@ move.move_to = move_to
 ---- @param callback    The function to execute at each step
 ---- @return boolean    True if the turtle reached the given coordinates, false otherwise.
 --]]
-local function move_to_and_execute(x, y, z, force, callback)
+local function move_to_and_execute(x, y, z, force, callback, callback_args)
     local total_moved
 
-    total_moved = _move_to_axis_coord(up, down, _coordinates.y, y, force, callback)
-    total_moved = total_moved + _move_to_axis_coord(right, left, _coordinates.x, x, force, callback)
-    total_moved = total_moved + _move_to_axis_coord(forward, backward, _coordinates.z, z, force, callback)
+    total_moved = _move_to_axis_coord(up, down, _coordinates.y, y, force, callback, callback_args)
+    total_moved = total_moved + _move_to_axis_coord(forward, backward, _coordinates.x, x, force, callback, callback_args)
+    total_moved = total_moved + _move_to_axis_coord(right, left, _coordinates.z, z, force, callback, callback_args)
     return total_moved == math.abs(_coordinates.y - y) + math.abs(_coordinates.z - z) + math.abs(_coordinates.x - x)
 end
 move.move_to_and_execute = move_to_and_execute

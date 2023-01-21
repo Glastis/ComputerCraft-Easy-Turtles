@@ -11,14 +11,18 @@ local move = require 'move'
 local inventory = require 'inventory'
 local storage = require 'storage'
 
-local FIELD_SIZE_X = 5
-local FIELD_SIZE_Z = 5
-local CROP_PROPERTIES = {name = "mysticalagriculture:inferium_crop", stage = 7}
-local SEED_PROPERTIES = {name = "mysticalagriculture:inferium_seeds"}
+local FIELD_SIZE_X = 8
+local FIELD_SIZE_Z = 8
+local CROP_PROPERTIES = {name = 'mysticalagriculture:inferium_crop', stage = 7 }
+local PRODUCT_PROPERTIES = {name = 'mysticalagriculture:inferium_essence' }
+local SEED_PROPERTIES = {name = 'mysticalagriculture:inferium_seeds'}
+local DELAY_GROWTH = 600
 
 local function is_ready_to_harvest()
-    crop = turtle.inspectDown()
-    return crop and crop.name == CROP_PROPERTIES.name and crop.state.stage == CROP_PROPERTIES.stage
+    local crop_properties
+
+    _, crop_properties = turtle.inspectDown()
+    return crop_properties and crop_properties.name == CROP_PROPERTIES.name and crop_properties.state and crop_properties.state.age == CROP_PROPERTIES.stage
 end
 
 local function harvest_and_plant_below()
@@ -39,26 +43,29 @@ local function store_seeds_to_chest()
 end
 
 local function process_field()
-    local z
-    local x
+    local to_z
+    local to_x
 
     move.setCoords(0, 0, 0)
-    z = 0
-    x = 0
-    while z < FIELD_SIZE_Z do
-        move.move_to_and_execute(x, 0, z, true, harvest_and_plant_below)
-        if x == 0 then
-            x = FIELD_SIZE_X - 1
+    to_z = 0
+    while to_z <= FIELD_SIZE_Z do
+        if (to_z % 2) == 0 then
+            to_x = FIELD_SIZE_X
         else
-            x = 0
+            to_x = 0
         end
-        z = z + 1
+        if to_z ~= FIELD_SIZE_Z then
+            move.move_to_and_execute(to_x, 0, to_z + 1, true, harvest_and_plant_below)
+        else
+            move.move_to_and_execute(to_x, 0, to_z, true, harvest_and_plant_below)
+        end
+        to_z = to_z + 1
     end
     move.move_to_and_execute(0, 0, 0, true, harvest_and_plant_below)
 end
 
 local function cleanup_inventory()
-    inventory.drop_item(CROP_PROPERTIES.name, sides.bottom)
+    inventory.drop_item(PRODUCT_PROPERTIES.name, sides.bottom)
     inventory.drop_all(sides.top)
 end
 
@@ -70,15 +77,28 @@ end
 local function go_to_start_from_field()
     move.backward(3)
     move.down()
+    move.rotate(sides.front)
+end
+
+local function is_server_restart_hours()
+    local hour
+
+    hour = os.time("local")
+    return hour >= 5 and hour <= 7
 end
 
 local function main()
-    go_to_field_from_start()
-    get_seeds_from_chest()
-    process_field()
-    store_seeds_to_chest()
-    go_to_start_from_field()
-    cleanup_inventory()
+    while true do
+        if not is_server_restart_hours() then
+            go_to_field_from_start()
+            get_seeds_from_chest()
+            process_field()
+            store_seeds_to_chest()
+            go_to_start_from_field()
+            cleanup_inventory()
+        end
+        sleep(DELAY_GROWTH)
+    end
 end
 
 main()

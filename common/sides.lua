@@ -6,6 +6,10 @@
 
 local sides = {}
 
+if not turtle then
+    turtle = {}
+end
+
 sides.front = 0
 sides.right = 1
 sides.back = 2
@@ -15,5 +19,60 @@ sides.down = 5
 
 sides.top = sides.up
 sides.bottom = sides.down
+
+sides.labels = {
+    [sides.front] = "front",
+    [sides.right] = "right",
+    [sides.back] = "back",
+    [sides.left] = "left",
+    [sides.up] = "top",
+    [sides.down] = "bottom",
+    [sides.top] = "top",
+    [sides.bottom] = "bottom"
+}
+
+sides.suck = {
+    [sides.front] = turtle.suck,
+    [sides.right] = turtle.suck,
+    [sides.back] = turtle.suck,
+    [sides.left] = turtle.suck,
+    [sides.up] = turtle.suckUp,
+    [sides.down] = turtle.suckDown,
+    [sides.top] = turtle.suckUp,
+    [sides.bottom] = turtle.suckDown
+}
+
+sides.drop = {
+    [sides.front] = turtle.drop,
+    [sides.right] = turtle.drop,
+    [sides.back] = turtle.drop,
+    [sides.left] = turtle.drop,
+    [sides.up] = turtle.dropUp,
+    [sides.down] = turtle.dropDown,
+    [sides.top] = turtle.dropUp,
+    [sides.bottom] = turtle.dropDown
+}
+
+sides.dig = {
+    [sides.front] = turtle.dig,
+    [sides.right] = turtle.dig,
+    [sides.back] = turtle.dig,
+    [sides.left] = turtle.dig,
+    [sides.up] = turtle.digUp,
+    [sides.down] = turtle.digDown,
+    [sides.top] = turtle.digUp,
+    [sides.bottom] = turtle.digDown
+}
+
+sides.inspect = {
+    [sides.front] = turtle.inspect,
+    [sides.right] = turtle.inspect,
+    [sides.back] = turtle.inspect,
+    [sides.left] = turtle.inspect,
+    [sides.up] = turtle.inspectUp,
+    [sides.down] = turtle.inspectDown,
+    [sides.top] = turtle.inspectUp,
+    [sides.bottom] = turtle.inspectDown
+}
 
 return sides
