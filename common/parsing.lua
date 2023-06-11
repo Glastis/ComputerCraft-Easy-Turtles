@@ -56,4 +56,16 @@ local function parse_inventory(f_condition, f_get_slot_details, inventory_info, 
 end
 parsing.parse_inventory = parse_inventory
 
+local function item_name_split(item_name)
+    local item_name_split
+    local item_name_split_len
+
+    item_name_split = utilities.split(item_name, ':')
+    if #item_name_split ~= 2 then
+        error('Error: item_name_split: item_name is invalid')
+    end
+    return table.unpack(item_name_split)
+end
+parsing.item_name_split = item_name_split
+
 return parsing
