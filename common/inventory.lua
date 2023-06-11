@@ -215,7 +215,7 @@ inventory.drop_item_list = drop_item_list
 local function drop_all(side)
     return _parse_inventory_and_select_in_range(function(detail)
         return detail
-    end, 1, constants.TURTLE_INVENTORY_SIZE, 1, drop_slot_to_side, { side})
+    end, 1, constants.TURTLE_INVENTORY_SIZE, 1, drop_slot_to_side, { side })
 end
 inventory.drop_all = drop_all
 
