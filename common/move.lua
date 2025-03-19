@@ -13,7 +13,7 @@ local _coordinates = {}
 _coordinates.x = 0
 _coordinates.y = 0
 _coordinates.z = 0
-_coordinates.facing = 0
+_coordinates.facing = sides.front
 
 
 -------------------------------------------------------------------[[
@@ -221,7 +221,6 @@ local function right(amount, force, callback, callback_args)
     return _move_direction(turtle.dig, turtle.forward, amount, force, sides.right, callback, callback_args)
 end
 
-move.move_to = move_to
 
 --[[
 ---- Move the turtle to the given coordinates, and execute the callback function at each step
@@ -255,5 +254,6 @@ move.move_to_and_execute = move_to_and_execute
 local function move_to(x, y, z, force)
     return move_to_and_execute(x, y, z, force, nil)
 end
+move.move_to = move_to
 
 return move

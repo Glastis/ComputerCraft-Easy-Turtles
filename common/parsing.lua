@@ -22,8 +22,9 @@ local function _parse_inventory_init(inventory_info)
     if inventory_info.step == 0 or
        (inventory_info.step > 0 and inventory_info.from_slot > inventory_info.to_slot) or
        (inventory_info.step < 0 and inventory_info.from_slot < inventory_info.to_slot) then
-        print('from_slot: ' .. from_slot .. ', to_slot: ' .. to_slot .. ', step: ' .. step)
-        error('Error: _parse_inventory_init: step is set to 0 or is incompatible with other arguments')
+        print('from_slot: ' .. tostring(inventory_info.from_slot) .. ', to_slot: ' .. tostring(inventory_info.to_slot) .. ', step: ' .. tostring(inventory_info.step))
+        print('Error: _parse_inventory_init: step is set to 0 or is incompatible with other arguments')
+        return _parse_inventory_init()
     end
     return inventory_info
 end

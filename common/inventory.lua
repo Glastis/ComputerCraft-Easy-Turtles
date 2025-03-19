@@ -18,6 +18,18 @@ local inventory = {}
 ---------------------------------------------------------------------
 -------------------------------------------------------------------]]
 
+local function get_item_slot(item_name)
+    return  parsing.parse_inventory(function(detail)
+                return detail and detail.name == item_name
+            end,
+            turtle.getItemDetail,
+            nil,
+            true, function(i)
+                return i
+            end)
+end
+inventory.get_item_slot = get_item_slot
+
 --[[
 ---- Iterate over the inventory and run a given function on each slot. If the function returns true,
 ---- the iteration stops, or if a callback is given, the callback is
@@ -64,6 +76,7 @@ local function _select_item_in_slot_range(item_name, from_slot, to_slot, step)
                                                     return detail and detail.name == item_name
                                                 end, from_slot, to_slot, step)
 end
+inventory._select_item_in_slot_range = _select_item_in_slot_range
 
 local function _select_empty_in_slot_range(from_slot, to_slot, step)
     return _parse_inventory_and_select_in_range(function(detail)
@@ -96,6 +109,7 @@ inventory.select_item = select_item
 local function select_first_empty_slot()
     return _select_empty_in_slot_range(1, constants.TURTLE_INVENTORY_SIZE, 1)
 end
+inventory.select_first_empty_slot = select_first_empty_slot
 
 --[[
 ---- Select the first empty slot.
@@ -106,6 +120,7 @@ end
 local function select_last_empty_slot()
     return _select_empty_in_slot_range(constants.TURTLE_INVENTORY_SIZE, 1, -1)
 end
+inventory.select_last_empty_slot = select_last_empty_slot
 
 --[[
 ---- Select the first slot with the first item found in the given list.
@@ -136,7 +151,7 @@ local function defragment_inventory()
     local detail
 
     i = 1
-    while i <= constants.TURTLE_INVENTORY_SIZE do
+    while i < constants.TURTLE_INVENTORY_SIZE do
         detail = turtle.getItemDetail(i)
         if not detail then
             if not _parse_inventory_and_select_in_range(function(condition_detail)
@@ -218,5 +233,79 @@ local function drop_all(side)
     end, 1, constants.TURTLE_INVENTORY_SIZE, 1, drop_slot_to_side, { side })
 end
 inventory.drop_all = drop_all
+
+local function drop_all_except(item_list, side)
+    return _parse_inventory_and_select_in_range(function(detail)
+        return detail and not utils.is_elem_in_table(item_list, detail.name)
+    end, 1, constants.TURTLE_INVENTORY_SIZE, 1, drop_slot_to_side, { side })
+end
+inventory.drop_all_except = drop_all_except
+
+local function suck_all(side)
+    while sides.suck[side]() do
+        sleep(.01)
+    end
+end
+inventory.suck_all = suck_all
+
+local function count_empty_slots()
+    local count
+
+    count = 0
+    for i = 1, constants.TURTLE_INVENTORY_SIZE do
+        if not turtle.getItemDetail(i) then
+            count = count + 1
+        end
+    end
+    return count
+end
+inventory.count_empty_slots = count_empty_slots
+
+local function count_item(item_name)
+    local count
+    local detail
+
+    count = 0
+    for i = 1, constants.TURTLE_INVENTORY_SIZE do
+        detail = turtle.getItemDetail(i)
+        if detail and detail.name == item_name then
+            count = count + detail.count
+        end
+    end
+    return count
+end
+inventory.count_item = count_item
+
+local count_item_slots = function(item_name)
+    local count
+    local detail
+
+    count = 0
+    for i = 1, constants.TURTLE_INVENTORY_SIZE do
+        detail = turtle.getItemDetail(i)
+        if detail and detail.name == item_name then
+            count = count + 1
+        end
+    end
+    return count
+end
+inventory.count_item_slots = count_item_slots
+
+function get_last_empty_slot()
+    local i
+    local detail
+
+    i = constants.TURTLE_INVENTORY_SIZE
+    while i > 0 do
+        detail = turtle.getItemDetail(i)
+        if not detail then
+            return i
+        end
+        i = i - 1
+    end
+    return nil
+end
+inventory.get_last_empty_slot = get_last_empty_slot
+
 
 return inventory

@@ -25,8 +25,8 @@ sides.labels = {
     [sides.right] = "right",
     [sides.back] = "back",
     [sides.left] = "left",
-    [sides.up] = "top",
-    [sides.down] = "bottom",
+    [sides.up] = "up",
+    [sides.down] = "down",
     [sides.top] = "top",
     [sides.bottom] = "bottom"
 }
@@ -74,5 +74,33 @@ sides.inspect = {
     [sides.top] = turtle.inspectUp,
     [sides.bottom] = turtle.inspectDown
 }
+
+local function get_side_from_label(label)
+    for side, side_label in pairs(sides.labels) do
+        if side_label == label then
+            return side
+        end
+    end
+    return nil
+end
+sides.get_side_from_label = get_side_from_label
+
+local function get_opposite_side(side)
+    if side == sides.front then
+        return sides.back
+    elseif side == sides.back then
+        return sides.front
+    elseif side == sides.right then
+        return sides.left
+    elseif side == sides.left then
+        return sides.right
+    elseif side == sides.up then
+        return sides.down
+    elseif side == sides.down then
+        return sides.up
+    end
+    return nil
+end
+sides.get_opposite_side = get_opposite_side
 
 return sides
