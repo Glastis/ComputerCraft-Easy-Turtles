@@ -16,6 +16,7 @@ prefixes.mod.domum_ornamentoum = 'domum_ornamentoum:'
 prefixes.mod.hostile_networks = 'hostilenetworks:'
 prefixes.mod.trashcans = 'trashcans:'
 prefixes.mod.allthemodium = 'allthemodium:'
+prefixes.mod.wstweaks = 'wstweaks:'
 
 prefixes.blast_furnace = prefixes.mod.minecraft .. 'blast_furnace_'
 prefixes.redstone = 'redstoneIntegrator_'
