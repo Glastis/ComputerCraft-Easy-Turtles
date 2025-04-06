@@ -8,7 +8,7 @@ local peripheral_names = {}
 local item_names = {}
 local routes = {}
 
-local MAIN_LOOP_DELAY = 15
+local MAIN_LOOP_DELAY = 60
 
 local function check_peripheral_connection(peripheral_name)
     if type(peripheral_name) == 'table' then
@@ -30,21 +30,21 @@ local function init()
     peripheral_names.chest_predict_end = prefixes.ender_chest .. '6'
 
     peripheral_names.fabricator_heart = prefixes.loot_fabricator .. '0'
-    peripheral_names.sim_piglish = prefixes.sim .. '0'
+    peripheral_names.sim_piglich = prefixes.sim .. '0'
     peripheral_names.all_sim = {
-        peripheral_names.sim_piglish,
+        peripheral_names.sim_piglich,
     }
 
     item_names.predict_matrix = prefixes.mod.hostile_networks .. 'prediction_matrix'
     item_names.predict_end = prefixes.mod.hostile_networks .. 'end_prediction'
     item_names.predict_mob = prefixes.mod.hostile_networks .. 'prediction'
-    item_names.piglish_heart = prefixes.mod.allthemodium .. 'piglish_heart'
+    item_names.piglich_heart = prefixes.mod.allthemodium .. 'piglich_heart'
 
     routes = {}
     routes[#routes+1] = {from = peripheral_names.chest_predict_matrix, to = peripheral_names.all_sim, item = item_names.predict_matrix}
-    routes[#routes+1] = {from = peripheral_names.sim_piglish, to = peripheral_names.chest_predict_end, item = item_names.predict_end}
-    routes[#routes+1] = {from = peripheral_names.sim_piglish, to = peripheral_names.fabricator_heart, item = item_names.predict_mob}
-    routes[#routes+1] = {from = peripheral_names.fabricator_heart, to = peripheral_names.chest_heart, item = item_names.piglish_heart}
+    routes[#routes+1] = {from = peripheral_names.sim_piglich, to = peripheral_names.chest_predict_end, item = item_names.predict_end}
+    routes[#routes+1] = {from = peripheral_names.sim_piglich, to = peripheral_names.fabricator_heart, item = item_names.predict_mob}
+    routes[#routes+1] = {from = peripheral_names.fabricator_heart, to = peripheral_names.chest_heart, item = item_names.piglich_heart}
 end
 
 local function route_item(from, to, item_name, condition_function, item_blacklist)
