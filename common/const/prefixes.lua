@@ -13,6 +13,9 @@ prefixes.mod.advanced_generators = 'advgenerators:'
 prefixes.mod.farmersdelight = 'farmersdelight:'
 prefixes.mod.minecolonies = 'minecolonies:'
 prefixes.mod.domum_ornamentoum = 'domum_ornamentoum:'
+prefixes.mod.hostile_networks = 'hostilenetworks:'
+prefixes.mod.trashcans = 'trashcans:'
+prefixes.mod.allthemodium = 'allthemodium:'
 
 prefixes.blast_furnace = prefixes.mod.minecraft .. 'blast_furnace_'
 prefixes.redstone = 'redstoneIntegrator_'
@@ -30,5 +33,8 @@ prefixes.inventory_connector = prefixes.mod.toms_storage .. 'ts.inventory_connec
 prefixes.ender_chest = prefixes.mod.enderstorage .. 'ender_chest_'
 prefixes.advanced_generator_item_input = prefixes.mod.advanced_generators .. 'item_input_'
 prefixes.colony_integrator = prefixes.mod.minecolonies .. 'colonyIntegrator_'
+prefixes.sim = prefixes.mod.hostile_networks .. 'sim_chamber_'
+prefixes.loot_fabricator = prefixes.mod.hostile_networks .. 'loot_fabricator_'
+prefixes.trash_item = prefixes.mod.trashcans .. 'item_trash_can_tile_'
 
 return prefixes
