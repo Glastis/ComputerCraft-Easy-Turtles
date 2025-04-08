@@ -1,6 +1,6 @@
 local GITHUB_API_BASE = "https://api.github.com/repos/"
 local GITHUB_RAW_BASE = "https://raw.githubusercontent.com/"
-local DEFAULT_BRANCH_FALLBACK = "main"
+local DEFAULT_BRANCHES = {"master", "main"}
 
 local args = {...}
 
@@ -9,7 +9,11 @@ if #args < 2 then
     return
 end
 
-local repo = args[1]
+local function clean_repo_name(repo)
+    return repo:gsub("%.git$", "")
+end
+
+local repo = clean_repo_name(args[1])
 local output_dir = args[2]
 
 if not fs.exists(output_dir) then
@@ -28,14 +32,34 @@ local function download_file(url, path)
     return false
 end
 
+local function check_branch_exists(branch)
+    local url = GITHUB_API_BASE .. repo .. "/git/trees/" .. branch
+    local response = http.get(url)
+    if response then
+        response.close()
+        return true
+    end
+    return false
+end
+
 local function get_default_branch()
     local api_url = GITHUB_API_BASE .. repo
     local response = http.get(api_url)
-    if not response then return DEFAULT_BRANCH_FALLBACK end
-    
-    local data = textutils.unserialiseJSON(response.readAll())
-    response.close()
-    return data and data.default_branch or DEFAULT_BRANCH_FALLBACK
+    if response then
+        local data = textutils.unserialiseJSON(response.readAll())
+        response.close()
+        if data and data.default_branch then
+            return data.default_branch
+        end
+    end
+
+    for _, branch in ipairs(DEFAULT_BRANCHES) do
+        if check_branch_exists(branch) then
+            return branch
+        end
+    end
+
+    return DEFAULT_BRANCHES[1]
 end
 
 local function get_repo_tree(branch)
@@ -45,7 +69,7 @@ local function get_repo_tree(branch)
     
     local data = textutils.unserialiseJSON(response.readAll())
     response.close()
-    return data and data.tree or nil
+    return data and data.tree
 end
 
 local function get_files_to_download(tree, branch)
