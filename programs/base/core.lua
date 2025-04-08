@@ -1,4 +1,3 @@
-
 package.path = package.path .. ';/ComputerCraft/*/?.lua'
 package.path = package.path .. ';/ComputerCraft/common/?.lua'
 

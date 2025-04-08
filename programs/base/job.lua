@@ -1,6 +1,7 @@
 local job = {}
 
 package.path = package.path .. ';/ComputerCraft/*/?.lua'
+package.path = package.path .. ';/ComputerCraft/common/?.lua'
 
 local applied_energistics = require 'mods.applied_energistics'
 local item_registry = require 'programs.base.item_registry'
