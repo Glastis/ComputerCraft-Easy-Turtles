@@ -12,8 +12,29 @@ local function init(rs_peripheral_name, factories)
 end
 job.init = init
 
+local function add_missing_items(item_name_list)
+    local found
+
+    for _, item in pairs(item_name_list) do
+        found = false
+        for _, system_item in pairs(applied_energistics.system_item_list) do
+            if system_item.name == item then
+                found = true
+                break
+            end
+        end
+        if not found then
+            applied_energistics.system_item_list[#applied_energistics.system_item_list + 1] = {
+                name = item,
+                count = 0
+            }
+        end
+    end
+end
+
 local function build_job_list()
     applied_energistics.refresh_item_list(true)
+    add_missing_items(item_registry.list)
     job.to_purge = {}
     job.to_produce = {}
     job.to_compact = {}
@@ -32,10 +53,12 @@ local function build_job_list()
             end
     )
     applied_energistics.search_items_with_condition_exec(
-            item_registry.list,
+            item_registry.craftable_list,
             function(item)
+                print('item to craft', item_registry[item.name].full_name)
+                print('count:', item.count, 'wanted_min:', item_registry[item.name].wanted_min)
                 return item.count < item_registry[item.name].wanted_min and
-                    #item_registry[item.name].recipe > 0
+                    item_registry[item.name].recipe
             end,
             nil,
             false,
@@ -46,7 +69,6 @@ local function build_job_list()
     applied_energistics.search_items_with_condition_exec(
             item_registry.compactable_list,
             function(item)
-                print('item', item_registry[item.name].full_name)
                 return item.count > item_registry[item.name].wanted_max
             end,
             nil,
@@ -77,8 +99,16 @@ local function produce_missing()
         print('Producing', item.name)
         local tocraft = {
             name = item.name,
-            count = item.count
+            count = item_registry[item.name].wanted_min - item.count
         }
+        local ret = job.factories.craft(item.name, item_registry[item.name].wanted_min - item.count)
+        if ret then
+            item.count = item_registry[item.name].wanted_min
+        elseif ret == nil then
+            print('Recipe does not exist')
+        else
+            print('Recipe exists but failed')
+        end
     end
 end
 

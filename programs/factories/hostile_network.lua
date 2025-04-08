@@ -76,7 +76,7 @@ local function init()
     routes[#routes+1] = {from = peripheral_names.sim_witch, to = peripheral_names.fabricator_glowstone, item = item_names.predict_mob}
     routes[#routes+1] = {from = peripheral_names.fabricator_redstone, to = peripheral_names.chest_redstone, item_blacklist = item_names.predict_mob}
     routes[#routes+1] = {from = peripheral_names.fabricator_glowstone, to = peripheral_names.chest_glowstone, item_blacklist = item_names.predict_mob}
-    
+
     routes[#routes+1] = {from = peripheral_names.sim_evoker, to = peripheral_names.chest_predict_overworld, item = item_names.predict_overworld}
     routes[#routes+1] = {from = peripheral_names.sim_evoker, to = peripheral_names.fabricator_emerald, item = item_names.predict_mob}
     routes[#routes+1] = {from = peripheral_names.sim_evoker, to = peripheral_names.fabricator_undying, item = item_names.predict_mob}
@@ -128,7 +128,7 @@ local function exec_route_list(route_list, should_run_async)
 end
 
 local function normal_routing()
-    exec_route_list(routes, true)
+    exec_route_list(routes, false)
     print('Sleeping normal routes for ' .. MAIN_LOOP_DELAY .. ' seconds')
     sleep(MAIN_LOOP_DELAY)
 end

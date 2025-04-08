@@ -5,8 +5,8 @@
 
 local item_registry = {}
 
-local WANTED_MIN_DEFAULT = 50
-local WANTED_MAX_DEFAULT = 100
+local WANTED_MIN_DEFAULT = 10000
+local WANTED_MAX_DEFAULT = 50000
 local TRASHABLE_DEFAULT = true
 
 local function register_new_item(args)
@@ -27,8 +27,10 @@ local function register_new_item(args)
     item.recipe.amount = args.amount_per_craft
     item.recipe.shape = args.recipe_shape
     item.recipe.coproducts = args.coproducts
-    item.recipe.importable = args.importable
-    item.recipe.exportable = args.exportable
+    item.recipe.count_per_craft = args.count_per_craft
+    if next(item.recipe) == nil then
+        item.recipe = nil
+    end
     item.trashable = args.trashable or TRASHABLE_DEFAULT
     item_registry[item.full_name] = item
 end
@@ -45,93 +47,110 @@ end
 local function build_list_registry()
     item_registry.list = {}
     for item_name, item in pairs(item_registry) do
-        item_registry.list[#item_registry.list + 1] = item_name
+        if item.full_name then
+            item_registry.list[#item_registry.list + 1] = item_name
+        end
+    end
+end
+
+local function build_craftable_list()
+    item_registry.craftable_list = {}
+    for item_name, item in pairs(item_registry) do
+        if item.recipe then
+            item_registry.craftable_list[#item_registry.craftable_list + 1] = item_name
+        end
     end
 end
 
 local function build_compactable_list()
     item_registry.compactable_list = {}
     for item_name, item in pairs(item_registry) do
-        print('item', item_name)
         if item.compactable then
-            print('item', item_name, 'is compactable')
             item_registry.compactable_list[#item_registry.compactable_list + 1] = item_name
         end
     end
 end
 
-register_new_item({
-    ['full_name'] = 'minecraft:coal',
-    ['compactable'] = 9,
-    ['compact_to'] = 'minecraft:coal_block'
-})
-register_new_item({
-    ['full_name'] = 'minecraft:iron_ingot',
-    ['compactable'] = 9,
-    ['compact_to'] = 'minecraft:iron_block'
-})
-register_new_item({
-    ['full_name'] = 'minecraft:gold_ingot',
-    ['compactable'] = 9,
-    ['compact_to'] = 'minecraft:gold_block'
-})
-register_new_item({
-    ['full_name'] = 'minecraft:diamond',
-    ['compactable'] = 9,
-    ['compact_to'] = 'minecraft:diamond_block'
-})
-register_new_item({
-    ['full_name'] = 'minecraft:emerald',
-    ['compactable'] = 9,
-    ['compact_to'] = 'minecraft:emerald_block'
-})
-register_new_item({
-    ['full_name'] = 'minecraft:quartz',
-    ['compactable'] = 4,
-    ['compact_to'] = 'minecraft:quartz_block'
-})
-register_new_item({
-    ['full_name'] = 'minecraft:redstone',
-    ['compactable'] = 9,
-    ['compact_to'] = 'minecraft:redstone_block'
-})
-register_new_item({
-    ['full_name'] = 'minecraft:lapis_lazuli',
-    ['compactable'] = 9,
-    ['compact_to'] = 'minecraft:lapis_block'
-})
-register_new_item({
-    ['full_name'] = 'minecraft:clay_ball',
-    ['compactable'] = 4,
-    ['compact_to'] = 'minecraft:clay'
-})
-register_new_item({
-    ['full_name'] = 'minecraft:charcoal',
-    ['recipe'] = {
+local function init()
+    register_new_item({
+        ['full_name'] = 'minecraft:coal',
+        ['compactable'] = 9,
+        ['compact_to'] = 'minecraft:coal_block'
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:iron_ingot',
+        ['compactable'] = 9,
+        ['compact_to'] = 'minecraft:iron_block'
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:gold_ingot',
+        ['compactable'] = 9,
+        ['compact_to'] = 'minecraft:gold_block'
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:diamond',
+        ['compactable'] = 9,
+        ['compact_to'] = 'minecraft:diamond_block'
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:emerald',
+        ['compactable'] = 9,
+        ['compact_to'] = 'minecraft:emerald_block'
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:quartz',
+        ['compactable'] = 4,
+        ['compact_to'] = 'minecraft:quartz_block'
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:redstone',
+        ['compactable'] = 9,
+        ['compact_to'] = 'minecraft:redstone_block'
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:lapis_lazuli',
+        ['compactable'] = 9,
+        ['compact_to'] = 'minecraft:lapis_block'
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:clay_ball',
+        ['compactable'] = 4,
+        ['compact_to'] = 'minecraft:clay'
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:charcoal',
         ['factory'] = 'furnace',
-        ['shape'] = { 'minecraft:birch_log' },
-    },
-    ['compactable'] = 9,
-    ['compact_to'] = 'mekanism:block_charcoal'
-})
-register_new_item({
-    ['full_name'] = 'minecraft:cobblestone',
-    ['recipe'] = {
-        ['factory'] = 'cobble_generator'
-    },
-})
-register_new_item({
-    ['full_name'] = 'minecraft:stone',
-    ['recipe'] = {
+        ['recipe_shape'] = { 'minecraft:birch_log' },
+        ['count_per_craft'] = 1,
+        ['compactable'] = 9,
+        ['compact_to'] = 'mekanism:block_charcoal'
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:cobblestone',
+        ['factory'] = 'cobble_generator',
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:stone',
         ['factory'] = 'smelter',
-        ['shape'] = { 'minecraft:cobblestone' },
-    },
-})
+        ['recipe_shape'] = { 'minecraft:cobblestone' },
+        ['count_per_craft'] = 1
+    })
+    register_new_item({
+        ['full_name'] = 'minecraft:glass',
+        ['factory'] = 'smelter',
+        ['recipe_shape'] = { 'minecraft:sand' },
+        ['count_per_craft'] = 1
+    })
+    build_purge_registry()
+    build_compactable_list()
+    build_list_registry()
+    build_craftable_list()
+    print('len craftable_list', #item_registry.craftable_list)
+end
 
-
-
-build_purge_registry()
-build_compactable_list()
-build_list_registry()
+if not item_registry.init then
+    init()
+    item_registry.init = true
+end
 
 return item_registry
