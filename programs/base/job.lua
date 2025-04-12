@@ -6,9 +6,10 @@ package.path = package.path .. ';/ComputerCraft/common/?.lua'
 local applied_energistics = require 'mods.applied_energistics'
 local item_registry = require 'programs.base.item_registry'
 local utils = require 'common.utils'
+local factories = require 'programs.base.factories'
 
-local function init(rs_peripheral_name, factories)
-    applied_energistics.init(rs_peripheral_name)
+local function init(storage_peripheral_name, factories)
+    applied_energistics.init(storage_peripheral_name)
     job.factories = factories
 end
 job.init = init
@@ -34,6 +35,17 @@ local function add_missing_items(item_name_list)
     end
 end
 
+local function right_align(text, width)
+    local spaces = width - #text
+    return string.rep(" ", spaces) .. text
+end
+
+local function print_aligned(left_text, right_text)
+    local width = term.getSize()
+    local padding = width - #left_text - #right_text
+    print(left_text .. string.rep(" ", padding) .. right_text)
+end
+
 local function build_job_list()
     applied_energistics.refresh_item_list(true)
     add_missing_items(item_registry.list)
@@ -57,8 +69,10 @@ local function build_job_list()
     applied_energistics.search_items_with_condition_exec(
             item_registry.craftable_list,
             function(item)
-                print('item to craft', item_registry[item.name].full_name)
-                print('count:', item.count, 'wanted_min:', item_registry[item.name].wanted_min)
+                print_aligned(
+                    item_registry[item.name].full_name,
+                    item.count .. '/' .. item_registry[item.name].wanted_min
+                )
                 return item.count < item_registry[item.name].wanted_min and
                     item_registry[item.name].recipe
             end,
@@ -79,9 +93,7 @@ local function build_job_list()
                 job.to_compact[#job.to_compact + 1] = item
             end
     )
-    print('len to_purge', #job.to_purge)
-    print('len to_produce', #job.to_produce)
-    print('len to_compact', #job.to_compact)
+    print('To purge', #job.to_purge, ' | To produce', #job.to_produce, ' | To compact', #job.to_compact)
 end
 job.build_job_list = build_job_list
 
@@ -92,18 +104,20 @@ local function trash_overflow()
         print('Trashing', item.name)
         amount_to_trash = tonumber(item.count - item_registry[item.name].wanted_max)
         local ret = applied_energistics.move_item_to(item.name, amount_to_trash, job.factories.trash.name)
-        print(ret)
     end
 end
 
 local function produce_missing()
+    local tocraft
+    local ret
+
     for _, item in pairs(job.to_produce) do
         print('Producing', item.name)
-        local tocraft = {
+        tocraft = {
             name = item.name,
             count = item_registry[item.name].wanted_min - item.count
         }
-        local ret = job.factories.craft(item.name, item_registry[item.name].wanted_min - item.count)
+        ret = job.factories.craft(item.name, item_registry[item.name].wanted_min - item.count)
         if ret then
             item.count = item_registry[item.name].wanted_min
         elseif ret == nil then
@@ -135,9 +149,17 @@ local function compact()
     end
 end
 
+local function route_items()
+    for _, item in pairs(item_registry.sendable_list) do
+        print('Routing', item)
+        while applied_energistics.move_item_to(item, 64, factories[item_registry[item].send_to].name) > 0 do end
+    end
+end
+
 local function exec_job_list()
     produce_missing()
     compact()
+    route_items()
     trash_overflow()
 end
 job.exec_job_list = exec_job_list

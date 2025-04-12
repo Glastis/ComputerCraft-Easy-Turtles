@@ -23,6 +23,20 @@ local function check_peripheral_connection(peripheral_name)
     end
 end
 
+local function create_full_path(sim_name, chest_predict_name, fabricator_names, chest_names, predict_type)
+    predict_type = predict_type or item_names.predict_overworld
+    fabricator_names = type(fabricator_names) == 'table' and fabricator_names or {fabricator_names}
+    chest_names = type(chest_names) == 'table' and chest_names or {chest_names}
+
+    routes[#routes+1] = {from = sim_name, to = chest_predict_name, item = predict_type}
+    routes[#routes+1] = {from = sim_name, to = peripheral_names.trash, item = predict_type}
+    
+    for i, fabricator_name in ipairs(fabricator_names) do
+        routes[#routes+1] = {from = sim_name, to = fabricator_name, item = item_names.predict_mob}
+        routes[#routes+1] = {from = fabricator_name, to = chest_names[i], item_blacklist = item_names.predict_mob}
+    end
+end
+
 local function init()
     peripheral_names.trash = prefixes.trash_item .. '0'
     peripheral_names.chest_predict_matrix = prefixes.ender_chest .. '4'
@@ -35,6 +49,22 @@ local function init()
     peripheral_names.chest_glowstone = prefixes.ender_chest .. '12'
     peripheral_names.chest_emerald = prefixes.ender_chest .. '11'
     peripheral_names.chest_undying = prefixes.ender_chest .. '13'
+    peripheral_names.chest_iron = prefixes.ender_chest .. '29'
+    peripheral_names.chest_blaze = prefixes.ender_chest .. '30'
+    peripheral_names.chest_bone = prefixes.ender_chest .. '31'
+    peripheral_names.chest_membrane = prefixes.ender_chest .. '32'
+    peripheral_names.chest_rotten_flesh = prefixes.ender_chest .. '33'
+    peripheral_names.chest_gold = prefixes.ender_chest .. '34'
+    peripheral_names.chest_gunpowder = prefixes.ender_chest .. '35'
+    peripheral_names.chest_wither_star = prefixes.ender_chest .. '36'
+    peripheral_names.chest_magma_cream = prefixes.ender_chest .. '37'
+    peripheral_names.chest_wool = prefixes.ender_chest .. '38'
+    peripheral_names.chest_mutton = prefixes.ender_chest .. '39'
+    peripheral_names.chest_feather = prefixes.ender_chest .. '40'
+    peripheral_names.chest_chicken = prefixes.ender_chest .. '41'
+    peripheral_names.chest_leather = prefixes.ender_chest .. '42'
+    peripheral_names.chest_beef = prefixes.ender_chest .. '43'
+    peripheral_names.chest_porkchop = prefixes.ender_chest .. '44'
 
     peripheral_names.fabricator_heart = prefixes.loot_fabricator .. '0'
     peripheral_names.fabricator_skull = prefixes.loot_fabricator .. '3'
@@ -42,16 +72,58 @@ local function init()
     peripheral_names.fabricator_glowstone = prefixes.loot_fabricator .. '2'
     peripheral_names.fabricator_emerald = prefixes.loot_fabricator .. '4'
     peripheral_names.fabricator_undying = prefixes.loot_fabricator .. '5'
-
+    peripheral_names.fabricator_iron = prefixes.loot_fabricator .. '6'
+    peripheral_names.fabricator_blaze = prefixes.loot_fabricator .. '7'
+    peripheral_names.fabricator_bone = prefixes.loot_fabricator .. '8'
+    peripheral_names.fabricator_membrane = prefixes.loot_fabricator .. '9'
+    peripheral_names.fabricator_rotten_flesh = prefixes.loot_fabricator .. '10'
+    peripheral_names.fabricator_gold = prefixes.loot_fabricator .. '11'
+    peripheral_names.fabricator_gunpowder = prefixes.loot_fabricator .. '12'
+    peripheral_names.fabricator_wither_star = prefixes.loot_fabricator .. '13'
+    peripheral_names.fabricator_magma_cream = prefixes.loot_fabricator .. '14'
+    peripheral_names.fabricator_wool = prefixes.loot_fabricator .. '15'
+    peripheral_names.fabricator_mutton = prefixes.loot_fabricator .. '16'
+    peripheral_names.fabricator_feather = prefixes.loot_fabricator .. '17'
+    peripheral_names.fabricator_chicken = prefixes.loot_fabricator .. '18'
+    peripheral_names.fabricator_leather = prefixes.loot_fabricator .. '19'
+    peripheral_names.fabricator_beef = prefixes.loot_fabricator .. '20'
+    peripheral_names.fabricator_porkchop = prefixes.loot_fabricator .. '21'
+    
     peripheral_names.sim_piglich = prefixes.sim .. '0'
     peripheral_names.sim_wither_skeleton = prefixes.sim .. '1'
     peripheral_names.sim_witch = prefixes.sim .. '2'
     peripheral_names.sim_evoker = prefixes.sim .. '3'
+    peripheral_names.golem = prefixes.sim .. '4'
+    peripheral_names.blaze = prefixes.sim .. '5'
+    peripheral_names.skeleton = prefixes.sim .. '6'
+    peripheral_names.phantom = prefixes.sim .. '7'
+    peripheral_names.zombie = prefixes.sim .. '8'
+    peripheral_names.zombie_piglin = prefixes.sim .. '9'
+    peripheral_names.creeper = prefixes.sim .. '10'
+    peripheral_names.wither = prefixes.sim .. '11'
+    peripheral_names.magma_cube = prefixes.sim .. '12'
+    peripheral_names.sheep = prefixes.sim .. '13'
+    peripheral_names.chicken = prefixes.sim .. '14'
+    peripheral_names.cow = prefixes.sim .. '15'
+    peripheral_names.pig = prefixes.sim .. '16'
     peripheral_names.all_sim = {
         peripheral_names.sim_piglich,
         peripheral_names.sim_wither_skeleton,
         peripheral_names.sim_witch,
         peripheral_names.sim_evoker,
+        peripheral_names.golem,
+        peripheral_names.blaze,
+        peripheral_names.skeleton,
+        peripheral_names.phantom,
+        peripheral_names.zombie,
+        peripheral_names.zombie_piglin,
+        peripheral_names.creeper,
+        peripheral_names.wither,
+        peripheral_names.magma_cube,
+        peripheral_names.sheep,
+        peripheral_names.chicken,
+        peripheral_names.cow,
+        peripheral_names.pig,
     }
 
     item_names.predict_matrix = prefixes.mod.hostile_networks .. 'prediction_matrix'
@@ -63,25 +135,41 @@ local function init()
     routes = {}
     routes[#routes+1] = {from = peripheral_names.chest_predict_matrix, to = peripheral_names.all_sim, item = item_names.predict_matrix}
     
-    routes[#routes+1] = {from = peripheral_names.sim_piglich, to = peripheral_names.chest_predict_end, item = item_names.predict_end}
-    routes[#routes+1] = {from = peripheral_names.sim_piglich, to = peripheral_names.fabricator_heart, item = item_names.predict_mob}
-    routes[#routes+1] = {from = peripheral_names.fabricator_heart, to = peripheral_names.chest_heart, item_blacklist = item_names.predict_mob}
-
-    routes[#routes+1] = {from = peripheral_names.sim_wither_skeleton, to = peripheral_names.fabricator_skull, item = item_names.predict_mob}
-    routes[#routes+1] = {from = peripheral_names.sim_wither_skeleton, to = peripheral_names.chest_predict_nether, item = item_names.predict_nether}
-    routes[#routes+1] = {from = peripheral_names.fabricator_skull, to = peripheral_names.chest_skull, item_blacklist = item_names.predict_mob}
-
-    routes[#routes+1] = {from = peripheral_names.sim_witch, to = peripheral_names.chest_predict_overworld, item = item_names.predict_overworld}
-    routes[#routes+1] = {from = peripheral_names.sim_witch, to = peripheral_names.fabricator_redstone, item = item_names.predict_mob}
-    routes[#routes+1] = {from = peripheral_names.sim_witch, to = peripheral_names.fabricator_glowstone, item = item_names.predict_mob}
-    routes[#routes+1] = {from = peripheral_names.fabricator_redstone, to = peripheral_names.chest_redstone, item_blacklist = item_names.predict_mob}
-    routes[#routes+1] = {from = peripheral_names.fabricator_glowstone, to = peripheral_names.chest_glowstone, item_blacklist = item_names.predict_mob}
-
-    routes[#routes+1] = {from = peripheral_names.sim_evoker, to = peripheral_names.chest_predict_overworld, item = item_names.predict_overworld}
-    routes[#routes+1] = {from = peripheral_names.sim_evoker, to = peripheral_names.fabricator_emerald, item = item_names.predict_mob}
-    routes[#routes+1] = {from = peripheral_names.sim_evoker, to = peripheral_names.fabricator_undying, item = item_names.predict_mob}
-    routes[#routes+1] = {from = peripheral_names.fabricator_emerald, to = peripheral_names.chest_emerald, item_blacklist = item_names.predict_mob}
-    routes[#routes+1] = {from = peripheral_names.fabricator_undying, to = peripheral_names.chest_undying, item_blacklist = item_names.predict_mob}
+    create_full_path(
+        peripheral_names.sim_witch,
+        peripheral_names.chest_predict_overworld,
+        {peripheral_names.fabricator_redstone, peripheral_names.fabricator_glowstone},
+        {peripheral_names.chest_redstone, peripheral_names.chest_glowstone},
+        item_names.predict_overworld
+    )
+    create_full_path(
+        peripheral_names.sim_evoker,
+        peripheral_names.chest_predict_overworld,
+        {peripheral_names.fabricator_emerald, peripheral_names.fabricator_undying},
+        {peripheral_names.chest_emerald, peripheral_names.chest_undying},
+        item_names.predict_overworld
+    )
+    create_full_path(
+        peripheral_names.sheep, 
+        peripheral_names.chest_predict_overworld, 
+        {peripheral_names.fabricator_wool, peripheral_names.fabricator_mutton},
+        {peripheral_names.chest_wool, peripheral_names.chest_mutton},
+        item_names.predict_overworld
+    )
+    create_full_path(peripheral_names.sim_piglich, peripheral_names.chest_predict_end, peripheral_names.fabricator_heart, peripheral_names.chest_heart, item_names.predict_end)
+    create_full_path(peripheral_names.sim_wither_skeleton, peripheral_names.chest_predict_nether, peripheral_names.fabricator_skull, peripheral_names.chest_skull, item_names.predict_nether)
+    create_full_path(peripheral_names.golem, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_iron, peripheral_names.chest_iron)
+    create_full_path(peripheral_names.blaze, peripheral_names.chest_predict_nether, peripheral_names.fabricator_blaze, peripheral_names.chest_blaze, item_names.predict_nether)
+    create_full_path(peripheral_names.skeleton, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_bone, peripheral_names.chest_bone, item_names.predict_overworld)
+    create_full_path(peripheral_names.phantom, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_membrane, peripheral_names.chest_membrane, item_names.predict_overworld)
+    create_full_path(peripheral_names.zombie, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_rotten_flesh, peripheral_names.chest_rotten_flesh, item_names.predict_overworld)
+    create_full_path(peripheral_names.zombie_piglin, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_gold, peripheral_names.chest_gold, item_names.predict_nether)
+    create_full_path(peripheral_names.creeper, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_gunpowder, peripheral_names.chest_gunpowder, item_names.predict_overworld)
+    create_full_path(peripheral_names.wither, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_wither_star, peripheral_names.chest_wither_star, item_names.predict_end)
+    create_full_path(peripheral_names.magma_cube, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_magma_cream, peripheral_names.chest_magma_cream, item_names.predict_nether)
+    create_full_path(peripheral_names.chicken, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_feather, peripheral_names.chest_feather, item_names.predict_overworld)
+    create_full_path(peripheral_names.cow, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_beef, peripheral_names.chest_beef, item_names.predict_overworld)
+    create_full_path(peripheral_names.pig, peripheral_names.chest_predict_overworld, peripheral_names.fabricator_porkchop, peripheral_names.chest_porkchop, item_names.predict_overworld)
 end
 
 local function route_item(from, to, item_name, condition_function, item_blacklist)

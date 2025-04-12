@@ -4,8 +4,8 @@ package.path = package.path .. ';/ComputerCraft/common/?.lua'
 local job = require 'programs.base.job'
 local factories = require 'programs.base.factories'
 
-local DELAY_BUILD_JOB_LIST = 5
-local DELAY_EXEC_JOB_LIST = 6
+local DELAY_BUILD_JOB_LIST = 30
+local DELAY_EXEC_JOB_LIST = 31
 
 local function init()
     local events
