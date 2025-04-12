@@ -16,6 +16,7 @@ job.init = init
 local function add_missing_items(item_name_list)
     local found
 
+    applied_energistics.refresh_item_list(true)
     for _, item in pairs(item_name_list) do
         found = false
         for _, system_item in pairs(applied_energistics.system_item_list) do
