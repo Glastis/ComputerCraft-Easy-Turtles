@@ -18,6 +18,8 @@ prefixes.mod.trashcans = 'trashcans:'
 prefixes.mod.allthemodium = 'allthemodium:'
 prefixes.mod.wstweaks = 'wstweaks:'
 prefixes.mod.mekanism = 'mekanism:'
+prefixes.mod.mekanism_generators = 'mekanismgenerators:'
+
 prefixes.blast_furnace = prefixes.mod.minecraft .. 'blast_furnace_'
 prefixes.redstone = 'redstoneIntegrator_'
 prefixes.barrel = prefixes.mod.minecraft .. 'barrel_'
