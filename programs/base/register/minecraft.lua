@@ -1,65 +1,34 @@
 local prefix = require 'common.const.prefixes'
 
 return function(register_new_item)
-    register_new_item({
-        ['full_name'] = prefix.mod.minecraft .. 'coal',
-        ['compactable'] = 9,
-        ['compact_to'] = prefix.mod.minecraft .. 'coal_block'
+    local function register_compactable(args)
+        register_new_item({
+            ['full_name'] = prefix.mod.minecraft .. args.name,
+            ['compactable'] = args.count or 9,
+            ['compact_to'] = args.compact_to or (prefix.mod.minecraft .. args.block),
+            ['factory'] = args.factory,
+            ['recipe_shape'] = args.recipe_shape,
+        })
+    end
+
+    register_compactable({ name = 'coal',         block = 'coal_block' })
+    register_compactable({ name = 'iron_ingot',   block = 'iron_block',     factory = 'iron' })
+    register_compactable({ name = 'gold_ingot',   block = 'gold_block',     factory = 'gold' })
+    register_compactable({ name = 'diamond',      block = 'diamond_block' })
+    register_compactable({ name = 'emerald',      block = 'emerald_block',  factory = 'emerald' })
+    register_compactable({ name = 'quartz',       block = 'quartz_block',   count = 4 })
+    register_compactable({ name = 'redstone',     block = 'redstone_block', factory = 'redstone' })
+    register_compactable({ name = 'lapis_lazuli', block = 'lapis_block' })
+    register_compactable({ name = 'clay_ball',    block = 'clay',           count = 4 })
+    register_compactable({
+        name = 'charcoal',
+        compact_to = prefix.mod.mekanism .. 'block_charcoal',
+        factory = 'furnace',
+        recipe_shape = { prefix.mod.minecraft .. 'birch_log' },
     })
-    register_new_item({
-        ['full_name'] = prefix.mod.minecraft .. 'iron_ingot',
-        ['factory'] = 'iron',
-        ['compactable'] = 9,
-        ['compact_to'] = prefix.mod.minecraft ..'iron_block'
-    })
-    register_new_item({
-        ['full_name'] = prefix.mod.minecraft .. 'gold_ingot',
-        ['factory'] = 'gold',
-        ['compactable'] = 9,
-        ['compact_to'] = prefix.mod.minecraft .. 'gold_block'
-    })
-    register_new_item({
-        ['full_name'] = prefix.mod.minecraft .. 'diamond',
-        ['compactable'] = 9,
-        ['compact_to'] = prefix.mod.minecraft .. 'diamond_block'
-    })
-    register_new_item({
-        ['full_name'] = prefix.mod.minecraft .. 'emerald',
-        ['factory'] = 'emerald',
-        ['compactable'] = 9,
-        ['compact_to'] = prefix.mod.minecraft .. 'emerald_block'
-    })
-    register_new_item({
-        ['full_name'] = prefix.mod.minecraft .. 'quartz',
-        ['compactable'] = 4,
-        ['compact_to'] = prefix.mod.minecraft .. 'quartz_block'
-    })
-    register_new_item({
-        ['full_name'] = prefix.mod.minecraft .. 'redstone',
-        ['factory'] = 'redstone',
-        ['compactable'] = 9,
-        ['compact_to'] = prefix.mod.minecraft .. 'redstone_block'
-    })
-    register_new_item({
-        ['full_name'] = prefix.mod.minecraft .. 'lapis_lazuli',
-        ['compactable'] = 9,
-        ['compact_to'] = prefix.mod.minecraft .. 'lapis_block'
-    })
-    register_new_item({
-        ['full_name'] = prefix.mod.minecraft .. 'clay_ball',
-        ['compactable'] = 4,
-        ['compact_to'] = prefix.mod.minecraft ..'clay'
-    })
-    register_new_item({
-        ['full_name'] = prefix.mod.minecraft .. 'charcoal',
-        ['factory'] = 'furnace',
-        ['recipe_shape'] = { prefix.mod.minecraft .. 'birch_log' },
-        ['compactable'] = 9,
-        ['compact_to'] = prefix.mod.mekanism .. 'block_charcoal'
-    })
+
     register_new_item({
         ['full_name'] = prefix.mod.minecraft .. 'cobblestone',
-        ['wanted_max'] =  50000000
     })
     register_new_item({
         ['full_name'] = prefix.mod.minecraft .. 'stone',
@@ -131,10 +100,9 @@ return function(register_new_item)
     })
 
     local register_stone = function(name)
-        register_new_item({
-            ['full_name'] = prefix.mod.minecraft .. name,
-            ['compactable'] = 9,
-            ['compact_to'] = prefix.mod.minecraft .. 'allthecompressed:' .. name .. '_1x'
+        register_compactable({
+            name = name,
+            compact_to = 'allthecompressed:' .. name .. '_1x',
         })
     end
 
