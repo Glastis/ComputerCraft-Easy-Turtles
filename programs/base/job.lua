@@ -52,13 +52,26 @@ local function build_job_list()
     job.to_purge = {}
     job.to_produce = {}
     job.to_compact = {}
+    job.to_overflow = {}
     job.to_import = {}
     job.to_export = {}
     applied_energistics.search_items_with_condition_exec(
+            item_registry.on_overflow_list,
+            function(item)
+                return item.count > item_registry[item.name].wanted_max
+            end,
+            nil,
+            false,
+            function(item)
+                job.to_overflow[#job.to_overflow + 1] = item
+            end
+    )
+    applied_energistics.search_items_with_condition_exec(
             item_registry.purgeable_overflow_list,
             function(item)
-                return item.count > item_registry[item.name].wanted_max and 
-                    not item_registry[item.name].compactable
+                return item.count > item_registry[item.name].wanted_max and
+                    not item_registry[item.name].compactable and
+                    not item_registry[item.name].on_overflow
             end,
             nil,
             false,
@@ -85,7 +98,8 @@ local function build_job_list()
     applied_energistics.search_items_with_condition_exec(
             item_registry.compactable_list,
             function(item)
-                return item.count > item_registry[item.name].wanted_max
+                return item.count > item_registry[item.name].wanted_max and
+                    not item_registry[item.name].on_overflow
             end,
             nil,
             false,
@@ -93,9 +107,20 @@ local function build_job_list()
                 job.to_compact[#job.to_compact + 1] = item
             end
     )
-    print('To purge', #job.to_purge, ' | To produce', #job.to_produce, ' | To compact', #job.to_compact)
+    print('To overflow', #job.to_overflow, ' | To purge', #job.to_purge, ' | To produce', #job.to_produce, ' | To compact', #job.to_compact)
 end
 job.build_job_list = build_job_list
+
+local function handle_overflow()
+    local amount
+
+    for _, item in pairs(job.to_overflow) do
+        local cfg = item_registry[item.name].on_overflow
+        amount = item.count - item_registry[item.name].wanted_max
+        print('Overflow handler for', item.name, amount)
+        cfg.fn(item, amount, cfg.args)
+    end
+end
 
 local function trash_overflow()
     local amount_to_trash
@@ -158,6 +183,7 @@ end
 
 local function exec_job_list()
     produce_missing()
+    handle_overflow()
     compact()
     route_items()
     trash_overflow()

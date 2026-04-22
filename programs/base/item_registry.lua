@@ -43,6 +43,7 @@ local function register_new_item(args)
     end
     item.send_to = args.send_to
     item.trashable = args.trashable or TRASHABLE_DEFAULT
+    item.on_overflow = args.on_overflow
     item_registry[item.full_name] = item
 end
 
@@ -65,7 +66,8 @@ local function init()
         { key = 'compactable_list', field = 'compactable' },
         { key = 'list', field = 'full_name' },
         { key = 'craftable_list', field = 'recipe' },
-        { key = 'sendable_list', field = 'send_to' }
+        { key = 'sendable_list', field = 'send_to' },
+        { key = 'on_overflow_list', field = 'on_overflow' }
     }
 
     for _, list_config in ipairs(lists_to_build) do
