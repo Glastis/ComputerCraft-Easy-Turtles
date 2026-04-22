@@ -5,7 +5,7 @@ local MANIFEST_NAME = ".github_manifest"
 
 local function print_usage()
     print("Usage:")
-    print("  github clone author/repo output_dir")
+    print("  github clone author/repo output_dir [branch]")
     print("  github pull output_dir")
 end
 
@@ -32,6 +32,28 @@ local function write_manifest(output_dir, manifest)
     file.close()
 end
 
+local function get_header(headers, name)
+    if not headers then return nil end
+    return headers[name] or headers[name:lower()]
+end
+
+local function http_json(url, headers)
+    local response, _, failing = http.get(url, headers)
+    if response then
+        local body = response.readAll()
+        local resp_headers = response.getResponseHeaders and response.getResponseHeaders() or {}
+        response.close()
+        return textutils.unserialiseJSON(body), resp_headers, 200
+    end
+    if failing then
+        local code = failing.getResponseCode and failing.getResponseCode() or 0
+        local resp_headers = failing.getResponseHeaders and failing.getResponseHeaders() or {}
+        if failing.close then failing.close() end
+        return nil, resp_headers, code
+    end
+    return nil, {}, 0
+end
+
 local function download_file(url, path)
     local response = http.get(url)
     if response then
@@ -44,55 +66,6 @@ local function download_file(url, path)
     return false
 end
 
-local function check_branch_exists(repo, branch)
-    local url = GITHUB_API_BASE .. repo .. "/git/trees/" .. branch
-    local response = http.get(url)
-    if response then
-        response.close()
-        return true
-    end
-    return false
-end
-
-local function get_default_branch(repo)
-    local response = http.get(GITHUB_API_BASE .. repo)
-    if response then
-        local data = textutils.unserialiseJSON(response.readAll())
-        response.close()
-        if data and data.default_branch then
-            return data.default_branch
-        end
-    end
-
-    for _, branch in ipairs(DEFAULT_BRANCHES) do
-        if check_branch_exists(repo, branch) then
-            return branch
-        end
-    end
-
-    return DEFAULT_BRANCHES[1]
-end
-
-local function get_repo_tree(repo, branch)
-    local url = GITHUB_API_BASE .. repo .. "/git/trees/" .. branch .. "?recursive=1"
-    local response = http.get(url)
-    if not response then return nil end
-
-    local data = textutils.unserialiseJSON(response.readAll())
-    response.close()
-    return data and data.tree
-end
-
-local function tree_to_map(tree)
-    local map = {}
-    for _, item in ipairs(tree) do
-        if item.type == "blob" and not item.path:match("%.git") then
-            map[item.path] = item.sha
-        end
-    end
-    return map
-end
-
 local function ensure_parent_dir(file_path)
     local dir_path = file_path:match("(.*[/\\])")
     if dir_path and not fs.exists(dir_path) then
@@ -100,12 +73,12 @@ local function ensure_parent_dir(file_path)
     end
 end
 
-local function download_paths(repo, branch, output_dir, paths)
+local function download_paths(repo, commit_sha, output_dir, paths)
     local downloaded, failed = 0, 0
     for _, path in ipairs(paths) do
         local file_path = fs.combine(output_dir, path)
         ensure_parent_dir(file_path)
-        local url = GITHUB_RAW_BASE .. repo .. "/" .. branch .. "/" .. path
+        local url = GITHUB_RAW_BASE .. repo .. "/" .. commit_sha .. "/" .. path
         if download_file(url, file_path) then
             downloaded = downloaded + 1
             print("Downloaded: " .. path)
@@ -117,36 +90,99 @@ local function download_paths(repo, branch, output_dir, paths)
     return downloaded, failed
 end
 
-local function fetch_tree_map(repo)
-    print("Fetching repository metadata...")
-    local branch = get_default_branch(repo)
-    print("Using branch: " .. branch)
-
-    local tree = get_repo_tree(repo, branch)
-    if not tree then
-        print("Error: Failed to fetch repository tree")
-        return nil
-    end
-    return branch, tree_to_map(tree)
+local function fetch_commit(repo, branch)
+    local url = GITHUB_API_BASE .. repo .. "/commits/" .. branch
+    local data = http_json(url)
+    if not data or not data.sha then return nil end
+    local tree_sha = data.commit and data.commit.tree and data.commit.tree.sha
+    return data.sha, tree_sha
 end
 
-local function clone(repo, output_dir)
+local function resolve_branch(repo, preferred)
+    local candidates = preferred and {preferred} or DEFAULT_BRANCHES
+    for _, branch in ipairs(candidates) do
+        local commit_sha, tree_sha = fetch_commit(repo, branch)
+        if commit_sha then
+            return branch, commit_sha, tree_sha
+        end
+    end
+    return nil
+end
+
+local function fetch_tree(repo, tree_ref)
+    local url = GITHUB_API_BASE .. repo .. "/git/trees/" .. tree_ref .. "?recursive=1"
+    local data = http_json(url)
+    return data and data.tree
+end
+
+local function collect_blob_paths(tree)
+    local paths = {}
+    for _, item in ipairs(tree) do
+        if item.type == "blob" and not item.path:match("%.git") then
+            table.insert(paths, item.path)
+        end
+    end
+    return paths
+end
+
+local function clone(repo, output_dir, preferred_branch)
     if not fs.exists(output_dir) then
         fs.makeDir(output_dir)
     end
 
-    local branch, files_map = fetch_tree_map(repo)
-    if not files_map then return end
-
-    local paths = {}
-    for path in pairs(files_map) do
-        table.insert(paths, path)
+    print("Resolving branch...")
+    local branch, commit_sha, tree_sha = resolve_branch(repo, preferred_branch)
+    if not branch then
+        print("Error: no suitable branch found")
+        return
     end
+    print("Branch: " .. branch .. " @ " .. commit_sha:sub(1, 7))
+
+    local tree = fetch_tree(repo, tree_sha or branch)
+    if not tree then
+        print("Error: failed to fetch repository tree")
+        return
+    end
+    local paths = collect_blob_paths(tree)
     print(string.format("Found %d files to download", #paths))
 
-    local downloaded, failed = download_paths(repo, branch, output_dir, paths)
-    write_manifest(output_dir, {repo = repo, branch = branch, files = files_map})
+    local downloaded, failed = download_paths(repo, commit_sha, output_dir, paths)
+    write_manifest(output_dir, {repo = repo, branch = branch, commit_sha = commit_sha})
     print(string.format("Clone complete. Success: %d, Failed: %d", downloaded, failed))
+end
+
+local function delete_path(output_dir, path)
+    local file_path = fs.combine(output_dir, path)
+    if fs.exists(file_path) then
+        fs.delete(file_path)
+        print("Deleted: " .. path)
+    end
+end
+
+local function apply_diff(repo, commit_sha, output_dir, files)
+    local to_download, to_delete = {}, {}
+    for _, f in ipairs(files) do
+        local status = f.status
+        if status == "removed" then
+            table.insert(to_delete, f.filename)
+        elseif status == "renamed" then
+            if f.previous_filename then
+                table.insert(to_delete, f.previous_filename)
+            end
+            table.insert(to_download, f.filename)
+        else
+            table.insert(to_download, f.filename)
+        end
+    end
+
+    print(string.format("Changed: %d, Removed: %d", #to_download, #to_delete))
+
+    for _, path in ipairs(to_delete) do
+        delete_path(output_dir, path)
+    end
+
+    local downloaded, failed = download_paths(repo, commit_sha, output_dir, to_download)
+    return downloaded, failed, #to_delete
 end
 
 local function pull(output_dir)
@@ -155,38 +191,46 @@ local function pull(output_dir)
         print("Error: no manifest found in " .. output_dir .. ". Use 'clone' first.")
         return
     end
+    if not manifest.commit_sha then
+        print("Error: manifest predates SHA tracking. Re-clone to upgrade.")
+        return
+    end
 
     local repo = manifest.repo
-    print("Repo: " .. repo)
+    local branch = manifest.branch
+    print("Repo: " .. repo .. " (" .. branch .. ")")
 
-    local branch, remote_map = fetch_tree_map(repo)
-    if not remote_map then return end
+    local url = GITHUB_API_BASE .. repo .. "/compare/" .. manifest.commit_sha .. "..." .. branch
+    local headers = manifest.etag and {["If-None-Match"] = manifest.etag} or nil
+    local data, resp_headers, code = http_json(url, headers)
 
-    local to_download, to_delete = {}, {}
-    for path, sha in pairs(remote_map) do
-        if manifest.files[path] ~= sha then
-            table.insert(to_download, path)
-        end
+    if code == 304 then
+        print("Already up to date (304).")
+        return
     end
-    for path in pairs(manifest.files) do
-        if not remote_map[path] then
-            table.insert(to_delete, path)
-        end
-    end
-
-    print(string.format("Changed: %d, Removed: %d", #to_download, #to_delete))
-
-    for _, path in ipairs(to_delete) do
-        local file_path = fs.combine(output_dir, path)
-        if fs.exists(file_path) then
-            fs.delete(file_path)
-            print("Deleted: " .. path)
-        end
+    if not data then
+        print("Error: compare request failed (HTTP " .. tostring(code) .. ")")
+        return
     end
 
-    local downloaded, failed = download_paths(repo, branch, output_dir, to_download)
-    write_manifest(output_dir, {repo = repo, branch = branch, files = remote_map})
-    print(string.format("Pull complete. Updated: %d, Failed: %d, Removed: %d", downloaded, failed, #to_delete))
+    local new_etag = get_header(resp_headers, "ETag") or manifest.etag
+    local status = data.status or "unknown"
+    local head_sha = manifest.commit_sha
+    if data.commits and #data.commits > 0 then
+        head_sha = data.commits[#data.commits].sha
+    end
+
+    if status == "identical" or not data.files or #data.files == 0 then
+        print("Already up to date.")
+        write_manifest(output_dir, {repo = repo, branch = branch, commit_sha = head_sha, etag = new_etag})
+        return
+    end
+
+    print("Status: " .. status .. " -> " .. head_sha:sub(1, 7))
+
+    local downloaded, failed, removed = apply_diff(repo, head_sha, output_dir, data.files)
+    write_manifest(output_dir, {repo = repo, branch = branch, commit_sha = head_sha, etag = new_etag})
+    print(string.format("Pull complete. Updated: %d, Failed: %d, Removed: %d", downloaded, failed, removed))
 end
 
 local args = {...}
@@ -194,7 +238,7 @@ local command = args[1]
 
 if command == "clone" then
     if #args < 3 then print_usage() return end
-    clone(clean_repo_name(args[2]), args[3])
+    clone(clean_repo_name(args[2]), args[3], args[4])
 elseif command == "pull" then
     if #args < 2 then print_usage() return end
     pull(args[2])
