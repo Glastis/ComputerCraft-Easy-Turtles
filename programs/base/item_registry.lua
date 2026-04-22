@@ -17,6 +17,7 @@ local REGISTER_MODULES = {
     'minecraft',
     'hostile_networks',
     'forbidden_arcanus',
+    'ores',
 }
 
 local function register_new_item(args)
