@@ -8,6 +8,8 @@ local item_registry = require 'programs.base.item_registry'
 local utils = require 'common.utils'
 local factories = require 'programs.base.factories'
 
+local INFINITE_THRESHOLD = 100000000
+
 local function init(storage_peripheral_name, factories)
     applied_energistics.init(storage_peripheral_name)
     job.factories = factories
@@ -58,7 +60,8 @@ local function build_job_list()
     applied_energistics.search_items_with_condition_exec(
             item_registry.on_overflow_list,
             function(item)
-                return item.count > item_registry[item.name].wanted_max
+                return item.count > item_registry[item.name].wanted_max and
+                    item.count <= INFINITE_THRESHOLD
             end,
             nil,
             false,
@@ -70,6 +73,7 @@ local function build_job_list()
             item_registry.purgeable_overflow_list,
             function(item)
                 return item.count > item_registry[item.name].wanted_max and
+                    item.count <= INFINITE_THRESHOLD and
                     not item_registry[item.name].compactable and
                     not item_registry[item.name].on_overflow
             end,
@@ -99,6 +103,7 @@ local function build_job_list()
             item_registry.compactable_list,
             function(item)
                 return item.count > item_registry[item.name].wanted_max and
+                    item.count <= INFINITE_THRESHOLD and
                     not item_registry[item.name].on_overflow
             end,
             nil,
