@@ -10,7 +10,7 @@ local DELAY_EXEC_JOB_LIST = 31
 local function init()
     local events
 
-    job.init('meBridge_0', factories)
+    job.init('me_bridge_0', factories)
     events = {}
     events[#events + 1] = { ['callback'] = job.build_job_list, ['delay'] = DELAY_BUILD_JOB_LIST }
     events[#events + 1] = { ['callback'] = job.exec_job_list, ['delay'] = DELAY_EXEC_JOB_LIST }
