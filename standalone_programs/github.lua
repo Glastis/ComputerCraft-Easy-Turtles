@@ -5,7 +5,7 @@ local MANIFEST_NAME = ".github_manifest"
 
 local function print_usage()
     print("Usage:")
-    print("  github clone author/repo output_dir [branch]")
+    print("  github clone author/repo [branch] [-o output_dir]")
     print("  github pull output_dir")
 end
 
@@ -233,12 +233,36 @@ local function pull(output_dir)
     print(string.format("Pull complete. Updated: %d, Failed: %d, Removed: %d", downloaded, failed, removed))
 end
 
+local function parse_clone_args(args)
+    local repo, branch, output_dir
+    local i = 2
+    while i <= #args do
+        local a = args[i]
+        if a == "-o" then
+            output_dir = args[i + 1]
+            i = i + 2
+        elseif not repo then
+            repo = a
+            i = i + 1
+        elseif not branch then
+            branch = a
+            i = i + 1
+        else
+            i = i + 1
+        end
+    end
+    return repo, branch, output_dir
+end
+
 local args = {...}
 local command = args[1]
 
 if command == "clone" then
-    if #args < 3 then print_usage() return end
-    clone(clean_repo_name(args[2]), args[3], args[4])
+    local repo, branch, output_dir = parse_clone_args(args)
+    if not repo then print_usage() return end
+    repo = clean_repo_name(repo)
+    output_dir = output_dir or repo:match("([^/]+)$")
+    clone(repo, output_dir, branch)
 elseif command == "pull" then
     if #args < 2 then print_usage() return end
     pull(args[2])
