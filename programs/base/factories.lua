@@ -54,7 +54,7 @@ end
 factories.craft = craft
 
 create_factory(prefixes.trash_item .. '1', 'trash', 'bin', 'trashcan', 'trash_bin')
-create_factory(prefixes.ender_chest .. '', 'furnace', 'smelter', 'mekanism_smelter')
+create_factory(prefixes.ender_chest .. '1', 'furnace', 'smelter', 'mekanism_smelter')
 create_factory(prefixes.ender_chest .. '', 'crusher_create', 'crusher_wheel')
 create_factory(prefixes.ender_chest .. '', 'crusher', 'crusher_mekanism')
 create_factory(prefixes.ender_chest .. '', 'enricher', 'enricher_mekanism')
