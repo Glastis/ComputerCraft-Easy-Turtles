@@ -12,7 +12,6 @@ local DUSTS = {
     'alltheores:osmium_dust',
     'alltheores:platinum_dust',
     'alltheores:silver_dust',
-    'alltheores:steel_dust',
     'alltheores:tin_dust',
     'alltheores:uranium_dust',
     'alltheores:zinc_dust',
