@@ -29,23 +29,27 @@ end
 local function craft(item_name, count)
     local item_registry = require 'programs.base.item_registry'
     local item = item_registry[item_name]
-    local count_per_craft = item.recipe.count_per_craft or 1
-    count = count * count_per_craft
-    if item.recipe then
-        if item.recipe.factory and not item.recipe.shape then
-            print('Getting', item_name, count, factories[item.recipe.factory].name)
-            return applied_energistics.get_item_from(item_name, count, factories[item.recipe.factory].name)
-        elseif item.recipe.factory and item.recipe.shape then
-            print('Sending', item.recipe.shape[1], count, factories[item.recipe.factory].name)
-            return applied_energistics.send_item_to(item.recipe.shape[1], count, factories[item.recipe.factory].name)
-        else
-            print('Crafting', item_name, count)
-            return applied_energistics.ae.craftItem({['name'] = item_name, ['count'] = count})
-        end
-    else
+
+    if not item.recipe then
         print('Factory not found for', item_name)
         return nil
     end
+    count = count * (item.recipe.count_per_craft or 1)
+    if not item.recipe.factory then
+        print('Crafting', item_name, count)
+        return applied_energistics.ae.craftItem({['name'] = item_name, ['count'] = count})
+    end
+    local factory = factories[item.recipe.factory]
+    if not factory then
+        print('Factory alias not registered:', item.recipe.factory, 'for', item_name)
+        return nil
+    end
+    if item.recipe.shape then
+        print('Sending', item.recipe.shape[1], count, factory.name)
+        return applied_energistics.send_item_to(item.recipe.shape[1], count, factory.name)
+    end
+    print('Getting', item_name, count, factory.name)
+    return applied_energistics.get_item_from(item_name, count, factory.name)
 end
 factories.craft = craft
 
