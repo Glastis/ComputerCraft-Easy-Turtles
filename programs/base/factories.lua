@@ -9,7 +9,6 @@ package.path = package.path .. ';/ComputerCraft/*/?.lua'
 package.path = package.path .. ';/ComputerCraft/common/?.lua'
 
 local module_init = false
-local item_registry = require 'programs.base.item_registry'
 local applied_energistics = require 'mods.applied_energistics'
 local prefixes = require 'common.const.prefixes'
 
@@ -28,6 +27,7 @@ local function create_factory(peripheral_name, ...)
 end
 
 local function craft(item_name, count)
+    local item_registry = require 'programs.base.item_registry'
     local item = item_registry[item_name]
     local count_per_craft = item.recipe.count_per_craft or 1
     count = count * count_per_craft
