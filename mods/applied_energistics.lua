@@ -4,7 +4,11 @@ local constant = require('common/constants')
 
 local function refresh_item_list(force)
     if force or not applied_energistics.system_item_list then
-        applied_energistics.system_item_list = applied_energistics.ae.listItems()
+        local raw = applied_energistics.ae.getItems() or {}
+        for _, item in ipairs(raw) do
+            item.count = tonumber(item.amount) or item.count or 0
+        end
+        applied_energistics.system_item_list = raw
     end
 end
 applied_energistics.refresh_item_list = refresh_item_list
@@ -25,7 +29,6 @@ local function search_items_with_condition_exec(item_name_list, condition_callba
             if  system_item.name == provided_item_name and
                 ((type(condition_callback_data) == 'table') and condition_callback(system_item, table.unpack(condition_callback_data)) or
                 ( type(condition_callback_data) ~= 'table') and condition_callback(system_item, condition_callback_data)) then
-                system_item.amount = tonumber(system_item.amount)
                 if on_true_return then
                     return on_true_callback(system_item, ...)
                 end
@@ -45,7 +48,7 @@ local function search_items_with_condition(item_name_list, condition_callback, .
     found_amount = search_items_with_condition_exec(item_name_list, condition_callback, {...}, true, function(item, ...)
         found_items[item.name] = {}
         found_items[item.name].name = item.name
-        found_items[item.name].count = item.amount
+        found_items[item.name].count = item.count
         found_items[item.name].fingerprint = item.fingerprint
     end)
     return found_items, found_amount == #item_name_list
@@ -54,21 +57,21 @@ applied_energistics.search_items_with_condition = search_items_with_condition
 
 local function search_items(item_name_list, minimum_amount, maximum_amount)
     return search_items_with_condition(item_name_list, function(item, min, max)
-        return  (not min or min <= item.amount) and
-                (not max or max >  item.amount)
+        return  (not min or min <= item.count) and
+                (not max or max >  item.count)
     end, minimum_amount, maximum_amount)
 end
 applied_energistics.search_items = search_items
 
 local function send_item_to(item_full_name, amount, peripheral_name)
-    return applied_energistics.ae.exportItemToPeripheral({ ['name'] = item_full_name, ['count'] = amount }, peripheral_name)
+    return applied_energistics.ae.exportItem({ ['name'] = item_full_name, ['count'] = amount }, peripheral_name)
 end
 applied_energistics.send_item_to = send_item_to
 applied_energistics.move_item_to = send_item_to
 applied_energistics.export_item_to = send_item_to
 
 local function get_item_from(item_full_name, amount, peripheral_name)
-    return applied_energistics.ae.importItemFromPeripheral({ ['name'] = item_full_name, ['count'] = amount }, peripheral_name)
+    return applied_energistics.ae.importItem({ ['name'] = item_full_name, ['count'] = amount }, peripheral_name)
 end
 applied_energistics.get_item_from = get_item_from
 
@@ -79,7 +82,7 @@ local function get_all_item_from(peripheral)
     end
     items_in_peripheral = factory.peripheral.list()
     for _, item in pairs(items_in_peripheral) do
-        applied_energistics.ae.importItemFromPeripheral(item, peripheral)
+        applied_energistics.ae.importItem(item, peripheral)
     end
 end
 applied_energistics.get_all_item_from = get_all_item_from
